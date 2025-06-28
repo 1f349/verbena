@@ -1,0 +1,55 @@
+package routes
+
+import (
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"github.com/1f349/mjwt"
+	"github.com/1f349/mjwt/auth"
+	"github.com/1f349/verbena/internal/database"
+	"github.com/1f349/verbena/logger"
+	"github.com/go-chi/chi"
+	"net/http"
+)
+
+func AddZoneRoutes(r chi.Router, db *database.Queries, keystore *mjwt.KeyStore) {
+	// List all zones
+	r.Get("/zones", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		zones, err := db.GetOwnedZones(req.Context(), b.Subject)
+		if err != nil {
+			logger.Logger.Error("Failed to get owned zones", "err", err)
+			http.Error(rw, "Database error occurred", http.StatusInternalServerError)
+			return
+		}
+
+		outZones := make([]database.Zone, 0, len(zones))
+		for _, z := range zones {
+			if !b.Claims.Perms.Has("verbena-zone:" + z.Zone.Name) {
+				continue
+			}
+			outZones = append(outZones, z.Zone)
+		}
+
+		json.NewEncoder(rw).Encode(outZones)
+	}))
+
+	// Show individual zone
+	r.Get("/zones/{zone}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		zoneName := chi.URLParam(req, "zone")
+		zone, err := db.GetZoneByName(req.Context(), zoneName)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			http.NotFound(rw, req)
+			return
+		case err != nil:
+			logger.Logger.Error("Failed to get owned zones", "err", err)
+			http.Error(rw, "Database error occurred", http.StatusInternalServerError)
+			return
+		}
+		if !b.Claims.Perms.Has("verbena-zone:" + zone.Name) {
+			http.NotFound(rw, req)
+			return
+		}
+		json.NewEncoder(rw).Encode(zone)
+	}))
+}

@@ -3,14 +3,12 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"database/sql"
-	"encoding/json"
 	"errors"
 	"flag"
 	"github.com/1f349/mjwt"
-	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/database"
+	"github.com/1f349/verbena/internal/routes"
 	"github.com/1f349/verbena/logger"
 	"github.com/charmbracelet/log"
 	"github.com/cloudflare/tableflip"
@@ -23,7 +21,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -139,45 +136,8 @@ func main() {
 		// TODO: maybe some cluster info too
 	})
 
-	// List all zones
-	r.Get("/zones", validateAuthToken(apiKeystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
-		zones, err := db.GetOwnedZones(req.Context(), b.Subject)
-		if err != nil {
-			logger.Logger.Error("Failed to get owned zones", "err", err)
-			http.Error(rw, "Database error occurred", http.StatusInternalServerError)
-			return
-		}
-
-		outZones := make([]database.Zone, 0, len(zones))
-		for _, z := range zones {
-			if !b.Claims.Perms.Has("verbena-zone:" + z.Zone.Name) {
-				continue
-			}
-			outZones = append(outZones, z.Zone)
-		}
-
-		json.NewEncoder(rw).Encode(outZones)
-	}))
-
-	// Show individual zone
-	r.Get("/zones/{zone}", validateAuthToken(apiKeystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
-		zoneName := chi.URLParam(req, "zone")
-		zone, err := db.GetZoneByName(req.Context(), zoneName)
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			http.NotFound(rw, req)
-			return
-		case err != nil:
-			logger.Logger.Error("Failed to get owned zones", "err", err)
-			http.Error(rw, "Database error occurred", http.StatusInternalServerError)
-			return
-		}
-		if !b.Claims.Perms.Has("verbena-zone:" + zone.Name) {
-			http.NotFound(rw, req)
-			return
-		}
-		json.NewEncoder(rw).Encode(zone)
-	}))
+	// Add routes
+	routes.AddZoneRoutes(r, db, apiKeystore)
 
 	serverApi := &http.Server{
 		Handler:           r,
@@ -207,25 +167,4 @@ func main() {
 	})
 
 	serverApi.Shutdown(context.Background())
-}
-
-type authHandler func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims])
-
-func validateAuthToken(keystore *mjwt.KeyStore, next authHandler) http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		rawAuth := req.Header.Get("Authorization")
-		token, found := strings.CutPrefix(rawAuth, "Bearer ")
-		if !found {
-			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-
-		_, b, err := mjwt.ExtractClaims[auth.AccessTokenClaims](keystore, token)
-		if err != nil {
-			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-
-		next(rw, req, b)
-	}
 }
