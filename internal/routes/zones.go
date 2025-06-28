@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -10,9 +11,15 @@ import (
 	"github.com/1f349/verbena/logger"
 	"github.com/go-chi/chi"
 	"net/http"
+	"strconv"
 )
 
-func AddZoneRoutes(r chi.Router, db *database.Queries, keystore *mjwt.KeyStore) {
+type zoneQueries interface {
+	GetOwnedZones(ctx context.Context, userID string) ([]database.GetOwnedZonesRow, error)
+	GetZone(ctx context.Context, id int64) (database.Zone, error)
+}
+
+func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 	// List all zones
 	r.Get("/zones", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 		zones, err := db.GetOwnedZones(req.Context(), b.Subject)
