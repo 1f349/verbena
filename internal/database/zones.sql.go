@@ -83,3 +83,21 @@ func (q *Queries) GetOwnedZones(ctx context.Context, userID string) ([]GetOwnedZ
 	}
 	return items, nil
 }
+
+const getZoneByName = `-- name: GetZoneByName :one
+SELECT id, name, serial, active
+FROM zones
+WHERE name = ?
+`
+
+func (q *Queries) GetZoneByName(ctx context.Context, name string) (Zone, error) {
+	row := q.db.QueryRowContext(ctx, getZoneByName, name)
+	var i Zone
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Serial,
+		&i.Active,
+	)
+	return i, err
+}

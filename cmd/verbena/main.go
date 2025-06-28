@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -156,6 +157,26 @@ func main() {
 		}
 
 		json.NewEncoder(rw).Encode(outZones)
+	}))
+
+	// Show individual zone
+	r.Get("/zones/{zone}", validateAuthToken(apiKeystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		zoneName := chi.URLParam(req, "zone")
+		zone, err := db.GetZoneByName(req.Context(), zoneName)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			http.NotFound(rw, req)
+			return
+		case err != nil:
+			logger.Logger.Error("Failed to get owned zones", "err", err)
+			http.Error(rw, "Database error occurred", http.StatusInternalServerError)
+			return
+		}
+		if !b.Claims.Perms.Has("verbena-zone:" + zone.Name) {
+			http.NotFound(rw, req)
+			return
+		}
+		json.NewEncoder(rw).Encode(zone)
 	}))
 
 	serverApi := &http.Server{

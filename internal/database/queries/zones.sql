@@ -8,3 +8,8 @@ SELECT sqlc.embed(zones), owners.user_id
 FROM zones
          INNER JOIN owners ON zones.id = owners.zone_id
 WHERE owners.user_id = ?;
+
+-- name: GetZoneByName :one
+SELECT *
+FROM zones
+WHERE name = ?;
