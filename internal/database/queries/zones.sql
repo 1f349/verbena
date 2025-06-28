@@ -9,7 +9,7 @@ FROM zones
          INNER JOIN owners ON zones.id = owners.zone_id
 WHERE owners.user_id = ?;
 
--- name: GetZoneByName :one
+-- name: GetZone :one
 SELECT *
 FROM zones
-WHERE name = ?;
+WHERE id = ?;

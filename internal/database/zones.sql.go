@@ -84,14 +84,14 @@ func (q *Queries) GetOwnedZones(ctx context.Context, userID string) ([]GetOwnedZ
 	return items, nil
 }
 
-const getZoneByName = `-- name: GetZoneByName :one
+const getZone = `-- name: GetZone :one
 SELECT id, name, serial, active
 FROM zones
-WHERE name = ?
+WHERE id = ?
 `
 
-func (q *Queries) GetZoneByName(ctx context.Context, name string) (Zone, error) {
-	row := q.db.QueryRowContext(ctx, getZoneByName, name)
+func (q *Queries) GetZone(ctx context.Context, id interface{}) (Zone, error) {
+	row := q.db.QueryRowContext(ctx, getZone, id)
 	var i Zone
 	err := row.Scan(
 		&i.ID,

@@ -34,9 +34,9 @@ func AddZoneRoutes(r chi.Router, db *database.Queries, keystore *mjwt.KeyStore) 
 	}))
 
 	// Show individual zone
-	r.Get("/zones/{zone}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
-		zoneName := chi.URLParam(req, "zone")
-		zone, err := db.GetZoneByName(req.Context(), zoneName)
+	r.Get("/zones/{id}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		zoneId := chi.URLParam(req, "id")
+		zone, err := db.GetZone(req.Context(), zoneId)
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			http.NotFound(rw, req)
