@@ -4,34 +4,38 @@
 
 package database
 
+import (
+	"database/sql"
+)
+
 type Owner struct {
-	ID     interface{} `json:"id"`
-	ZoneID int64       `json:"zone_id"`
-	UserID string      `json:"user_id"`
+	ID     int64  `json:"id"`
+	ZoneID int64  `json:"zone_id"`
+	UserID string `json:"user_id"`
 }
 
 type Record struct {
-	ID     interface{} `json:"id"`
-	Name   string      `json:"name"`
-	ZoneID int64       `json:"zone_id"`
-	Ttl    interface{} `json:"ttl"`
-	Type   string      `json:"type"`
-	Value  string      `json:"value"`
-	Active bool        `json:"active"`
+	ID     int64         `json:"id"`
+	Name   string        `json:"name"`
+	ZoneID int64         `json:"zone_id"`
+	Ttl    sql.NullInt32 `json:"ttl"`
+	Type   string        `json:"type"`
+	Value  string        `json:"value"`
+	Active bool          `json:"active"`
 }
 
 type StagedRecord struct {
-	ID       interface{} `json:"id"`
-	ZoneID   int64       `json:"zone_id"`
-	RecordID interface{} `json:"record_id"`
-	Ttl      interface{} `json:"ttl"`
-	Value    string      `json:"value"`
-	Active   bool        `json:"active"`
+	ID       int64         `json:"id"`
+	ZoneID   int64         `json:"zone_id"`
+	RecordID sql.NullInt64 `json:"record_id"`
+	Ttl      sql.NullInt32 `json:"ttl"`
+	Value    string        `json:"value"`
+	Active   bool          `json:"active"`
 }
 
 type Zone struct {
-	ID     interface{} `json:"id"`
-	Name   string      `json:"name"`
-	Serial int64       `json:"serial"`
-	Active bool        `json:"active"`
+	ID     int64  `json:"id"`
+	Name   string `json:"name"`
+	Serial int64  `json:"serial"`
+	Active bool   `json:"active"`
 }

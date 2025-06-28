@@ -90,7 +90,7 @@ FROM zones
 WHERE id = ?
 `
 
-func (q *Queries) GetZone(ctx context.Context, id interface{}) (Zone, error) {
+func (q *Queries) GetZone(ctx context.Context, id int64) (Zone, error) {
 	row := q.db.QueryRowContext(ctx, getZone, id)
 	var i Zone
 	err := row.Scan(

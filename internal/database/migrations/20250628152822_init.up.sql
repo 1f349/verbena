@@ -1,25 +1,25 @@
 CREATE TABLE IF NOT EXISTS zones
 (
-    id     INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    name   TEXT UNIQUE NOT NULL,
-    serial BIGINT      NOT NULL,
-    active BOOLEAN     NOT NULL DEFAULT 1
+    id     BIGINT  NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    name   TEXT    NOT NULL UNIQUE,
+    serial BIGINT  NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS owners
 (
-    id      INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    zone_id INTEGER NOT NULL,
-    user_id TEXT    NOT NULL,
+    id      BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    zone_id BIGINT NOT NULL,
+    user_id TEXT   NOT NULL,
 
     FOREIGN KEY (zone_id) REFERENCES zones (id) ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS records
 (
-    id      INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    id      BIGINT  NOT NULL PRIMARY KEY AUTO_INCREMENT,
     name    TEXT    NOT NULL,
-    zone_id INTEGER NOT NULL,
+    zone_id BIGINT  NOT NULL,
     ttl     INTEGER NULL,
     type    TEXT    NOT NULL,
     value   TEXT    NOT NULL,
@@ -33,9 +33,9 @@ CREATE INDEX record_type ON records (type);
 
 CREATE TABLE IF NOT EXISTS staged_records
 (
-    id        INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    zone_id   INTEGER NOT NULL,
-    record_id INTEGER NULL,
+    id        BIGINT  NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    zone_id   BIGINT  NOT NULL,
+    record_id BIGINT  NULL,
     ttl       INTEGER NULL,
     value     TEXT    NOT NULL,
     active    BOOLEAN NOT NULL,
