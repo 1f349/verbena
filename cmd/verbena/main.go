@@ -107,14 +107,12 @@ func main() {
 	if err != nil {
 		logger.Logger.Fatal("Failed to load MJWT verifier public key from file", "path", filepath.Join(wd, "keys"), "err", err)
 	}
-	_ = apiKeystore
 
 	db, err := database.InitDB(config.DB)
 	if err != nil {
 		logger.Logger.Fatal("Failed to open database", "err", err)
 		return
 	}
-	_ = db
 
 	// Listen must be called before Ready
 	lnApi, err := upg.Listen("tcp", config.Listen.Api)
@@ -139,6 +137,26 @@ func main() {
 		// TODO: add node health
 		// TODO: maybe some cluster info too
 	})
+
+	// List all zones
+	r.Get("/zones", validateAuthToken(apiKeystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		zones, err := db.GetOwnedZones(req.Context(), b.Subject)
+		if err != nil {
+			logger.Logger.Error("Failed to get owned zones", "err", err)
+			http.Error(rw, "Database error occurred", http.StatusInternalServerError)
+			return
+		}
+
+		outZones := make([]database.Zone, 0, len(zones))
+		for _, z := range zones {
+			if !b.Claims.Perms.Has("verbena-zone:" + z.Zone.Name) {
+				continue
+			}
+			outZones = append(outZones, z.Zone)
+		}
+
+		json.NewEncoder(rw).Encode(outZones)
+	}))
 
 	serverApi := &http.Server{
 		Handler:           r,

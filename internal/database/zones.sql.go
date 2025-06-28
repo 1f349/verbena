@@ -42,3 +42,44 @@ func (q *Queries) GetActiveZones(ctx context.Context) ([]Zone, error) {
 	}
 	return items, nil
 }
+
+const getOwnedZones = `-- name: GetOwnedZones :many
+SELECT zones.id, zones.name, zones.serial, zones.active, owners.user_id
+FROM zones
+         INNER JOIN owners ON zones.id = owners.zone_id
+WHERE owners.user_id = ?
+`
+
+type GetOwnedZonesRow struct {
+	Zone   Zone   `json:"zone"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) GetOwnedZones(ctx context.Context, userID string) ([]GetOwnedZonesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOwnedZones, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetOwnedZonesRow
+	for rows.Next() {
+		var i GetOwnedZonesRow
+		if err := rows.Scan(
+			&i.Zone.ID,
+			&i.Zone.Name,
+			&i.Zone.Serial,
+			&i.Zone.Active,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
