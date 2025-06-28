@@ -98,11 +98,12 @@ func main() {
 		}
 	}()
 
-	db, err := database.New(config.DB)
+	db, err := database.InitDB(config.DB)
 	if err != nil {
 		logger.Logger.Fatal("Failed to open database", "err", err)
 		return
 	}
+	_ = db
 
 	// Listen must be called before Ready
 	lnApi, err := upg.Listen("tcp", config.Listen.Api)
