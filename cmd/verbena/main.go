@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"flag"
+	"github.com/1f349/mjwt"
+	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
@@ -19,6 +22,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -98,6 +102,13 @@ func main() {
 		}
 	}()
 
+	// load the MJWT RSA public key from a pem encoded file
+	apiKeystore, err := mjwt.NewKeyStoreFromPath(filepath.Join(wd, "keys"))
+	if err != nil {
+		logger.Logger.Fatal("Failed to load MJWT verifier public key from file", "path", filepath.Join(wd, "keys"), "err", err)
+	}
+	_ = apiKeystore
+
 	db, err := database.InitDB(config.DB)
 	if err != nil {
 		logger.Logger.Fatal("Failed to open database", "err", err)
@@ -157,4 +168,25 @@ func main() {
 	})
 
 	serverApi.Shutdown(context.Background())
+}
+
+type authHandler func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims])
+
+func validateAuthToken(keystore *mjwt.KeyStore, next authHandler) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		rawAuth := req.Header.Get("Authorization")
+		token, found := strings.CutPrefix(rawAuth, "Bearer ")
+		if !found {
+			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		_, b, err := mjwt.ExtractClaims[auth.AccessTokenClaims](keystore, token)
+		if err != nil {
+			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		next(rw, req, b)
+	}
 }
