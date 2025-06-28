@@ -76,4 +76,24 @@ func TestAddZoneRoutes(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, "[{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"active\":true}]\n", rec.Body.String())
 	})
+
+	t.Run("/zones/{id}", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/zones/1234", nil)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest("GET", "/zones/1234", nil)
+		ps := auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"active\":true}\n", rec.Body.String())
+	})
 }
