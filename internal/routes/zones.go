@@ -41,9 +41,8 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 	}))
 
 	// Show individual zone
-	r.Get("/zones/{id:[0-9]+}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
-		zoneIdRaw := chi.URLParam(req, "id")
-		zoneId, err := strconv.ParseInt(zoneIdRaw, 10, 64)
+	r.Get("/zones/{zone_id:[0-9]+}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		zoneId, err := getZoneId(req)
 		if err != nil {
 			http.Error(rw, "Invalid zone ID", http.StatusBadRequest)
 			return
@@ -55,7 +54,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 			http.NotFound(rw, req)
 			return
 		case err != nil:
-			logger.Logger.Error("Failed to get owned zones", "err", err)
+			logger.Logger.Error("Failed to get zone", "err", err)
 			http.Error(rw, "Database error occurred", http.StatusInternalServerError)
 			return
 		}
@@ -66,4 +65,9 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 		}
 		json.NewEncoder(rw).Encode(zone)
 	}))
+}
+
+func getZoneId(req *http.Request) (int64, error) {
+	zoneIdRaw := chi.URLParam(req, "zone_id")
+	return strconv.ParseInt(zoneIdRaw, 10, 64)
 }
