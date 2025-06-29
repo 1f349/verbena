@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS staged_records
     zone_id   BIGINT  NOT NULL,
     record_id BIGINT  NULL,
     ttl       INTEGER NULL,
+    type      TEXT    NULL,
     value     TEXT    NOT NULL,
     active    BOOLEAN NOT NULL,
 
