@@ -113,7 +113,7 @@ func main() {
 	}
 
 	// Listen must be called before Ready
-	lnApi, err := upg.Listen("tcp", config.Listen.Api)
+	lnApi, err := upg.Listen("tcp", config.Listen)
 	if err != nil {
 		logger.Logger.Fatal("Listen failed", "err", err)
 	}
@@ -148,7 +148,7 @@ func main() {
 		IdleTimeout:       1 * time.Minute,
 		MaxHeaderBytes:    4 * humanize.MiByte,
 	}
-	logger.Logger.Info("API server listening on", "addr", config.Listen.Api)
+	logger.Logger.Info("API server listening on", "addr", config.Listen)
 	go func() {
 		err := serverApi.Serve(lnApi)
 		if !errors.Is(err, http.ErrServerClosed) {
