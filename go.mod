@@ -8,6 +8,8 @@ require (
 	github.com/cloudflare/tableflip v1.2.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-chi/chi v1.5.5
+	github.com/gobuffalo/nulls v0.4.2
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/spf13/afero v1.14.0
 	github.com/stretchr/testify v1.10.0
@@ -25,7 +27,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

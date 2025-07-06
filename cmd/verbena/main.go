@@ -138,6 +138,7 @@ func main() {
 
 	// Add routes
 	routes.AddZoneRoutes(r, db, apiKeystore)
+	routes.AddRecordRoutes(r, db, apiKeystore)
 
 	serverApi := &http.Server{
 		Handler:           r,

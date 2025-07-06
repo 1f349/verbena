@@ -5,7 +5,7 @@
 package database
 
 import (
-	"database/sql"
+	"github.com/gobuffalo/nulls"
 )
 
 type Owner struct {
@@ -15,22 +15,17 @@ type Owner struct {
 }
 
 type Record struct {
-	ID     int64         `json:"id"`
-	Name   string        `json:"name"`
-	ZoneID int64         `json:"zone_id"`
-	Ttl    sql.NullInt32 `json:"ttl"`
-	Type   string        `json:"type"`
-	Value  string        `json:"value"`
-	Active bool          `json:"active"`
-}
-
-type StagedRecord struct {
-	ID       int64         `json:"id"`
-	ZoneID   int64         `json:"zone_id"`
-	RecordID sql.NullInt64 `json:"record_id"`
-	Ttl      sql.NullInt32 `json:"ttl"`
-	Value    string        `json:"value"`
-	Active   bool          `json:"active"`
+	ID        int64       `json:"id"`
+	Name      string      `json:"name"`
+	ZoneID    int64       `json:"zone_id"`
+	Ttl       nulls.Int32 `json:"ttl"`
+	Type      string      `json:"type"`
+	Value     string      `json:"value"`
+	Active    bool        `json:"active"`
+	PreTtl    nulls.Int32 `json:"pre_ttl"`
+	PreValue  string      `json:"pre_value"`
+	PreActive bool        `json:"pre_active"`
+	PreDelete bool        `json:"pre_delete"`
 }
 
 type Zone struct {
