@@ -36,8 +36,8 @@ func (z *zoneTestQueries) GetOwnedZones(ctx context.Context, userID string) ([]d
 	}, nil
 }
 
-func (z *zoneTestQueries) GetZone(ctx context.Context, id int64) (database.Zone, error) {
-	if id != 1234 {
+func (z *zoneTestQueries) GetZone(ctx context.Context, zoneId int64) (database.Zone, error) {
+	if zoneId != 3456 {
 		return database.Zone{}, sql.ErrNoRows
 	}
 
@@ -59,12 +59,12 @@ func TestAddZoneRoutes(t *testing.T) {
 
 	t.Run("/zones", func(t *testing.T) {
 		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/zones", nil)
+		req := httptest.NewRequest(http.MethodGet, "/zones", nil)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
 		rec = httptest.NewRecorder()
-		req = httptest.NewRequest("GET", "/zones", nil)
+		req = httptest.NewRequest(http.MethodGet, "/zones", nil)
 		ps := auth.NewPermStorage()
 		ps.Set("verbena-zone:example.com")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
@@ -79,12 +79,12 @@ func TestAddZoneRoutes(t *testing.T) {
 
 	t.Run("/zones/{id}", func(t *testing.T) {
 		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/zones/1234", nil)
+		req := httptest.NewRequest(http.MethodGet, "/zones/3456", nil)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
 		rec = httptest.NewRecorder()
-		req = httptest.NewRequest("GET", "/zones/1234", nil)
+		req = httptest.NewRequest(http.MethodGet, "/zones/3456", nil)
 		ps := auth.NewPermStorage()
 		ps.Set("verbena-zone:example.com")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
