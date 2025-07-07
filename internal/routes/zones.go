@@ -9,7 +9,7 @@ import (
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 )
