@@ -26,10 +26,15 @@ func (z *zoneTestQueries) GetOwnedZones(ctx context.Context, userID string) ([]d
 	return []database.GetOwnedZonesRow{
 		{
 			Zone: database.Zone{
-				ID:     3456,
-				Name:   "example.com",
-				Serial: 2025062801,
-				Active: true,
+				ID:      3456,
+				Name:    "example.com",
+				Serial:  2025062801,
+				Admin:   "admin.example.com",
+				Refresh: 10,
+				Retry:   11,
+				Expire:  12,
+				Ttl:     13,
+				Active:  true,
 			},
 			UserID: "1234",
 		},
@@ -42,10 +47,15 @@ func (z *zoneTestQueries) GetZone(ctx context.Context, zoneId int64) (database.Z
 	}
 
 	return database.Zone{
-		ID:     3456,
-		Name:   "example.com",
-		Serial: 2025062801,
-		Active: true,
+		ID:      3456,
+		Name:    "example.com",
+		Serial:  2025062801,
+		Admin:   "admin.example.com",
+		Refresh: 10,
+		Retry:   11,
+		Expire:  12,
+		Ttl:     13,
+		Active:  true,
 	}, nil
 }
 
@@ -74,7 +84,7 @@ func TestAddZoneRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "[{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"active\":true}]\n", rec.Body.String())
+		assert.Equal(t, "[{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true}]\n", rec.Body.String())
 	})
 
 	t.Run("/zones/{id}", func(t *testing.T) {
@@ -94,6 +104,6 @@ func TestAddZoneRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"active\":true}\n", rec.Body.String())
+		assert.Equal(t, "{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true}\n", rec.Body.String())
 	})
 }
