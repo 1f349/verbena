@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"github.com/gobuffalo/nulls"
+	"os"
+	"os/exec"
 	"slices"
 	"strings"
 	"testing"
@@ -88,5 +90,33 @@ func TestWriteZone(t *testing.T) {
 			t.Fatal("expected", expectedLine, "actual", line)
 		}
 		lineIdx++
+	}
+
+	checkWithBindCheckZone(t, buf.Bytes(), "example.com")
+}
+
+func checkWithBindCheckZone(t *testing.T, data []byte, zoneName string) {
+	tempFile, err := os.CreateTemp("", "verbena-test-*.zone")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tempFile.Close()
+	defer os.Remove(tempFile.Name())
+
+	_, err = tempFile.Write(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tempFile.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := exec.Command("/usr/bin/named-checkzone", zoneName, tempFile.Name())
+	err = cmd.Run()
+	if err != nil {
+		t.Logf("exit code = %d", cmd.ProcessState.ExitCode())
+		t.Fatal(err)
 	}
 }
