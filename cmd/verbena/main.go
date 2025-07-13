@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"flag"
 	"github.com/1f349/mjwt"
 	"github.com/1f349/verbena/conf"
+	"github.com/1f349/verbena/internal/builder"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/internal/routes"
 	"github.com/1f349/verbena/logger"
@@ -15,7 +15,6 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
 	"net/http"
 	"os"
@@ -73,20 +72,9 @@ func main() {
 	}
 
 	wd := filepath.Dir(*configPath)
-	keyPath := filepath.Join(wd, "key")
 
-	serverKey, err := tls.LoadX509KeyPair(filepath.Join(wd, "self.cert.pem"), filepath.Join(wd, "self.key.pem"))
-	if err != nil {
-		logger.Logger.Fatal("Load server certificate", "err", err)
-	}
-
-	zonesFs := afero.NewBasePathFs(afero.NewOsFs(), filepath.Join(wd, config.ZonePath))
-
-	// TODO: calculate configuration from violet, bluebell and other sources
-	// TODO: write configuration to zones
-	_ = keyPath
-	_ = serverKey
-	_ = zonesFs
+	zonesPath := filepath.Join(wd, config.ZonePath)
+	_ = zonesPath
 
 	// Do an upgrade on SIGHUP
 	go func() {
