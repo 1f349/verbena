@@ -34,3 +34,16 @@ UPDATE records
 SET pre_delete = TRUE
 WHERE id = sqlc.arg(record_id)
   AND zone_id = sqlc.arg(zone_id);
+
+-- name: CommitZoneRecords :execrows
+UPDATE records
+SET ttl    = pre_ttl,
+    value  = pre_value,
+    active = pre_active
+WHERE zone_id = ?
+  AND (
+    ttl != pre_ttl
+        OR (ttl IS NULL) != (pre_ttl IS NULL)
+        OR (`value` != pre_value)
+        OR (active != pre_active)
+    );

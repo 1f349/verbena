@@ -7,4 +7,6 @@ type Conf struct {
 	DB            string             `yaml:"db"`
 	ZonePath      string             `yaml:"zonePath"`
 	GeneratorTick utils.DurationText `yaml:"generatorTick"`
+	Primary       bool               `yaml:"primary"`
+	CommitterTick utils.DurationText `yaml:"committerTick"`
 }

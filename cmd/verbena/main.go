@@ -7,6 +7,7 @@ import (
 	"github.com/1f349/mjwt"
 	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/builder"
+	"github.com/1f349/verbena/internal/committer"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/internal/routes"
 	"github.com/1f349/verbena/logger"
@@ -137,6 +138,9 @@ func main() {
 		logger.Logger.Fatal("Failed to initialise zone builder", "err", err)
 	}
 	zoneBuilder.Start()
+
+	commit := committer.New(db, time.Duration(config.CommitterTick), config.Primary)
+	commit.Start()
 
 	serverApi := &http.Server{
 		Handler:           r,

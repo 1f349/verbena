@@ -116,3 +116,18 @@ func (q *Queries) GetZone(ctx context.Context, id int64) (Zone, error) {
 	)
 	return i, err
 }
+
+const updateZoneSerial = `-- name: UpdateZoneSerial :exec
+UPDATE zones
+SET serial =
+        CASE
+            WHEN LEFT(serial, 8) = DATE_FORMAT(CURDATE(), '%Y%m%d') THEN serial + 1
+            ELSE CAST(DATE_FORMAT(CURDATE(), '%Y%m%d') AS UNSIGNED) * 100 + 1
+            END
+WHERE id = ?
+`
+
+func (q *Queries) UpdateZoneSerial(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, updateZoneSerial, id)
+	return err
+}
