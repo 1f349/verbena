@@ -27,13 +27,16 @@ type Builder struct {
 	nameservers []string
 }
 
-func New(db comitterQueries, genTick time.Duration, dir string, nameservers []string) *Builder {
+func New(db comitterQueries, genTick time.Duration, dir string, nameservers []string) (*Builder, error) {
+	if len(nameservers) < 3 {
+		return nil, fmt.Errorf("at least 3 nameservers are required")
+	}
 	return &Builder{
 		db:          db,
 		genTick:     genTick,
 		dir:         dir,
 		nameservers: nameservers,
-	}
+	}, nil
 }
 
 func (b *Builder) Start() {
@@ -68,7 +71,16 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		return err
 	}
 
-	zoneRecords := make([]zone.Record, 0, len(records)+4)
+	zoneRecords := make([]zone.Record, 0, len(records)+len(b.nameservers))
+
+	for _, i := range b.nameservers {
+		zoneRecords = append(zoneRecords, zone.Record{
+			Name:       "",
+			TimeToLive: nulls.UInt32{},
+			Type:       zone.NS,
+			Value:      i,
+		})
+	}
 
 	for _, i := range records {
 		var ty zone.RecordType
@@ -110,7 +122,7 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 	defer os.Remove(zoneFileTemp)
 
 	err = zone.WriteZone(zoneFile, zoneInfo.Name, uint32(zoneInfo.Ttl), zone.SoaRecord{
-		Nameserver: "ns1.example.com", // TODO: figure all this out
+		Nameserver: b.nameservers[0],
 		Admin:      zoneInfo.Admin,
 		Serial:     uint32(zoneInfo.Serial),
 		Refresh:    uint32(zoneInfo.Refresh),
