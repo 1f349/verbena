@@ -37,20 +37,26 @@ func New(db comitterQueries, genTick time.Duration, dir string, nameservers []st
 }
 
 func (b *Builder) Start() {
+	go b.internalTicker()
+}
+
+func (b *Builder) internalTicker() {
 	t := time.NewTicker(b.genTick)
-	select {
-	case <-t.C:
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		zones, err := b.db.GetActiveZones(ctx)
-		cancel()
-		if err != nil {
-			logger.Logger.Error("Failed to get list of active zones")
-			return
-		}
-		for _, i := range zones {
-			err = b.Generate(context.Background(), i)
+	for {
+		select {
+		case <-t.C:
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			zones, err := b.db.GetActiveZones(ctx)
+			cancel()
 			if err != nil {
-				logger.Logger.Error("Failed to generate a zone", "zone id", i.ID, "zone name", i.Name)
+				logger.Logger.Error("Failed to get list of active zones")
+				return
+			}
+			for _, i := range zones {
+				err = b.Generate(context.Background(), i)
+				if err != nil {
+					logger.Logger.Error("Failed to generate a zone", "zone id", i.ID, "zone name", i.Name, "err", err)
+				}
 			}
 		}
 	}
