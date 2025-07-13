@@ -6,7 +6,9 @@ import (
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/internal/zone"
 	"github.com/1f349/verbena/logger"
+	"github.com/charmbracelet/log"
 	"github.com/gobuffalo/nulls"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -120,8 +122,23 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 	}
 
 	cmd := exec.CommandContext(ctx, "/usr/bin/named-checkzone", zoneInfo.Name, zoneFileTemp)
-	err = cmd.Run()
+	out, err := cmd.StdoutPipe()
 	if err != nil {
+		return fmt.Errorf("named-checkzone failed: %v\n%s", err, out)
+	}
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		if logger.Logger.GetLevel() >= log.DebugLevel {
+			outBytes, err := io.ReadAll(out)
+			if err != nil {
+				return fmt.Errorf("named-checkzone failed: %v\n%s", err, out)
+			}
+			err = fmt.Errorf("named-checkzone failed with output: %w: %s", err, string(outBytes))
+		}
 		return err
 	}
 
