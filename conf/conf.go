@@ -1,7 +1,10 @@
 package conf
 
+import "github.com/1f349/verbena/internal/utils"
+
 type Conf struct {
-	Listen   string `yaml:"listen"`
-	DB       string `yaml:"db"`
-	ZonePath string `yaml:"zonePath"`
+	Listen        string             `yaml:"listen"`
+	DB            string             `yaml:"db"`
+	ZonePath      string             `yaml:"zonePath"`
+	GeneratorTick utils.DurationText `yaml:"generatorTick"`
 }

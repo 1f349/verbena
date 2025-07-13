@@ -1,0 +1,129 @@
+package builder
+
+import (
+	"context"
+	"fmt"
+	"github.com/1f349/verbena/internal/database"
+	"github.com/1f349/verbena/internal/zone"
+	"github.com/1f349/verbena/logger"
+	"github.com/gobuffalo/nulls"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"time"
+)
+
+type comitterQueries interface {
+	GetZoneActiveRecords(ctx context.Context, zoneID int64) ([]database.Record, error)
+	GetActiveZones(ctx context.Context) ([]database.Zone, error)
+}
+
+type Builder struct {
+	db          comitterQueries
+	genTick     time.Duration
+	dir         string
+	nameservers []string
+}
+
+func New(db comitterQueries, genTick time.Duration, dir string, nameservers []string) *Builder {
+	return &Builder{
+		db:          db,
+		genTick:     genTick,
+		dir:         dir,
+		nameservers: nameservers,
+	}
+}
+
+func (b *Builder) Start() {
+	t := time.NewTicker(b.genTick)
+	select {
+	case <-t.C:
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		zones, err := b.db.GetActiveZones(ctx)
+		cancel()
+		if err != nil {
+			logger.Logger.Error("Failed to get list of active zones")
+			return
+		}
+		for _, i := range zones {
+			err = b.Generate(context.Background(), i)
+			if err != nil {
+				logger.Logger.Error("Failed to generate a zone", "zone id", i.ID, "zone name", i.Name)
+			}
+		}
+	}
+}
+
+func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
+	records, err := b.db.GetZoneActiveRecords(ctx, zoneInfo.ID)
+	if err != nil {
+		return err
+	}
+
+	zoneRecords := make([]zone.Record, 0, len(records)+4)
+
+	for _, i := range records {
+		var ty zone.RecordType
+		switch i.Type {
+		case "NS":
+			ty = zone.NS
+		case "MX":
+			ty = zone.MX
+		case "A":
+			ty = zone.A
+		case "AAAA":
+			ty = zone.AAAA
+		case "CNAME":
+			ty = zone.CNAME
+		case "TXT":
+			ty = zone.TXT
+		default:
+			return fmt.Errorf("unknown type: %s", i.Type)
+		}
+		zoneRecords = append(zoneRecords, zone.Record{
+			Name: i.Name,
+			TimeToLive: nulls.UInt32{
+				UInt32: uint32(i.Ttl.Int32),
+				Valid:  i.Ttl.Valid,
+			},
+			Type:  ty,
+			Value: i.Value,
+		})
+	}
+
+	zoneFileName := filepath.Join(b.dir, zoneInfo.Name+".zone")
+	zoneFileTemp := filepath.Join(b.dir, zoneInfo.Name+".zone.temp")
+
+	zoneFile, err := os.Create(zoneFileTemp)
+	if err != nil {
+		return err
+	}
+	defer zoneFile.Close()
+	defer os.Remove(zoneFileTemp)
+
+	err = zone.WriteZone(zoneFile, zoneInfo.Name, uint32(zoneInfo.Ttl), zone.SoaRecord{
+		Nameserver: "ns1.example.com", // TODO: figure all this out
+		Admin:      zoneInfo.Admin,
+		Serial:     uint32(zoneInfo.Serial),
+		Refresh:    uint32(zoneInfo.Refresh),
+		Retry:      uint32(zoneInfo.Retry),
+		Expire:     uint32(zoneInfo.Expire),
+		TimeToLive: uint32(zoneInfo.Ttl),
+	}, zoneRecords)
+	if err != nil {
+		return err
+	}
+
+	err = zoneFile.Close()
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, "/usr/bin/named-checkzone", zoneInfo.Name, zoneFileTemp)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return os.Rename(zoneFileTemp, zoneFileName)
+}

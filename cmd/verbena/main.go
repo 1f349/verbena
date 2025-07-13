@@ -128,6 +128,9 @@ func main() {
 	routes.AddZoneRoutes(r, db, apiKeystore)
 	routes.AddRecordRoutes(r, db, apiKeystore)
 
+	zoneBuilder := builder.New(db, time.Duration(config.GeneratorTick), zonesPath, []string{"ns1.example.com", "ns2.example.com", "ns3.example.com"})
+	zoneBuilder.Start()
+
 	serverApi := &http.Server{
 		Handler:           r,
 		ReadTimeout:       1 * time.Minute,
