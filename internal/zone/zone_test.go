@@ -116,7 +116,6 @@ func checkWithBindCheckZone(t *testing.T, data []byte, zoneName string) {
 	cmd := exec.Command("/usr/bin/named-checkzone", zoneName, tempFile.Name())
 	err = cmd.Run()
 	if err != nil {
-		t.Logf("exit code = %d", cmd.ProcessState.ExitCode())
-		t.Fatal(err)
+		t.Fatal(err, "named-checkzone believes this zone file is invalid")
 	}
 }
