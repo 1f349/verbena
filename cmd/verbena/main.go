@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"gopkg.in/yaml.v3"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -74,7 +75,10 @@ func main() {
 	wd := filepath.Dir(*configPath)
 
 	zonesPath := filepath.Join(wd, config.ZonePath)
-	_ = zonesPath
+	err = os.Mkdir(zonesPath, 0700)
+	if err != nil && !errors.Is(err, fs.ErrExist) {
+		logger.Logger.Fatal("Failed to create zone path directory", "err", err)
+	}
 
 	// Do an upgrade on SIGHUP
 	go func() {
