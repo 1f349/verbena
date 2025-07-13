@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS owners
+(
+    id      BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    zone_id BIGINT NOT NULL,
+    user_id TEXT   NOT NULL,
+
+    FOREIGN KEY (zone_id) REFERENCES zones (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    INDEX owners_user_id (user_id)
+);
