@@ -139,7 +139,7 @@ func main() {
 	}
 	zoneBuilder.Start()
 
-	commit := committer.New(db, time.Duration(config.CommitterTick), config.Primary)
+	commit := committer.New(db, time.Duration(config.CommitterTick), config.Primary, zoneBuilder)
 	commit.Start()
 
 	serverApi := &http.Server{

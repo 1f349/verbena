@@ -2,6 +2,7 @@ package committer
 
 import (
 	"context"
+	"github.com/1f349/verbena/internal/builder"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
 	"time"
@@ -11,13 +12,15 @@ type Committer struct {
 	db      *database.Queries
 	tick    time.Duration
 	primary bool
+	b       *builder.Builder
 }
 
-func New(db *database.Queries, tick time.Duration, primary bool) *Committer {
+func New(db *database.Queries, tick time.Duration, primary bool, b *builder.Builder) *Committer {
 	return &Committer{
 		db:      db,
 		tick:    tick,
 		primary: primary,
+		b:       b,
 	}
 }
 
@@ -52,7 +55,7 @@ func (c *Committer) internalTick() {
 }
 
 func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
-	return c.db.UseTx(ctx, func(tx *database.Queries) error {
+	err := c.db.UseTx(ctx, func(tx *database.Queries) error {
 		rowsUpdated, err := tx.CommitZoneRecords(ctx, zone.ID)
 		if err != nil {
 			return err
@@ -65,4 +68,9 @@ func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return c.b.Generate(ctx, zone)
 }
