@@ -8,6 +8,12 @@ import (
 	"github.com/gobuffalo/nulls"
 )
 
+type BotToken struct {
+	ID      int64 `json:"id"`
+	OwnerID int64 `json:"owner_id"`
+	ZoneID  int64 `json:"zone_id"`
+}
+
 type Owner struct {
 	ID     int64  `json:"id"`
 	ZoneID int64  `json:"zone_id"`

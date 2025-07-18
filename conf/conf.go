@@ -9,4 +9,5 @@ type Conf struct {
 	GeneratorTick utils.DurationText `yaml:"generatorTick"`
 	Primary       bool               `yaml:"primary"`
 	CommitterTick utils.DurationText `yaml:"committerTick"`
+	TokenIssuer   string             `yaml:"tokenIssuer"`
 }

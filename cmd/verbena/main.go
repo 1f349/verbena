@@ -16,6 +16,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/golang-jwt/jwt/v4"
 	"gopkg.in/yaml.v3"
 	"io/fs"
 	"net/http"
@@ -99,6 +100,11 @@ func main() {
 		logger.Logger.Fatal("Failed to load MJWT verifier public key from file", "path", filepath.Join(wd, "keys"), "err", err)
 	}
 
+	apiIssuer, err := mjwt.NewIssuerWithKeyStore("Verbena", config.TokenIssuer, jwt.SigningMethodHS512, apiKeystore)
+	if err != nil {
+		logger.Logger.Fatal("Failed to load MJWT issuer private key")
+	}
+
 	db, err := database.InitDB(config.DB)
 	if err != nil {
 		logger.Logger.Fatal("Failed to open database", "err", err)
@@ -137,6 +143,7 @@ func main() {
 	// Add routes
 	routes.AddZoneRoutes(r, db, apiKeystore)
 	routes.AddRecordRoutes(r, db, apiKeystore)
+	routes.AddAuthRoutes(r, db, apiKeystore, apiIssuer)
 
 	zoneBuilder, err := builder.New(db, time.Duration(config.GeneratorTick), zonesPath, []string{"ns1.example.net", "ns2.example.net", "ns3.example.net"})
 	if err != nil {
