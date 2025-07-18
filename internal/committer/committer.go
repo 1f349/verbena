@@ -5,6 +5,7 @@ import (
 	"github.com/1f349/verbena/internal/builder"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
+	"os/exec"
 	"time"
 )
 
@@ -72,5 +73,15 @@ func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
 		return err
 	}
 
-	return c.b.Generate(ctx, zone)
+	err = c.b.Generate(ctx, zone)
+	if err != nil {
+		return err
+	}
+
+	return c.notify(ctx, zone)
+}
+
+func (c *Committer) notify(ctx context.Context, zone database.Zone) error {
+	cmd := exec.CommandContext(ctx, "/usr/sbin/rndc", "notify", zone.Name)
+	return cmd.Run()
 }
