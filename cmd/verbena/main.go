@@ -119,6 +119,11 @@ func main() {
 		r.Use(middleware.Logger)
 	}
 	r.Use(middleware.Timeout(2 * time.Minute))
+	r.Use(func(handler http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			rw.Header().Add("Server", "Verbena")
+		})
+	})
 
 	// Base endpoints
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
