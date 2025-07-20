@@ -45,8 +45,8 @@ func AddAuthRoutes(r *chi.Mux, db *database.Queries, userKeystore *mjwt.KeyStore
 		}
 
 		tokenId, err := db.RegisterBotToken(req.Context(), database.RegisterBotTokenParams{
-			OwnerID: ownerRow.ID,
-			ZoneID:  ownerRow.ZoneID,
+			OwnerID: ownerRow.Owner.ID,
+			ZoneID:  ownerRow.Owner.ZoneID,
 		})
 		if err != nil {
 			http.Error(rw, "Database error", http.StatusInternalServerError)

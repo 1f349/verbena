@@ -10,7 +10,7 @@ import (
 )
 
 const getOwnerByUserIdAndZone = `-- name: GetOwnerByUserIdAndZone :one
-SELECT owners.id, zone_id, user_id, zones.id, name, serial, admin, refresh, retry, expire, ttl, active
+SELECT owners.id, owners.zone_id, owners.user_id, zones.id, zones.name, zones.serial, zones.admin, zones.refresh, zones.retry, zones.expire, zones.ttl, zones.active
 FROM owners
          INNER JOIN zones ON owners.zone_id = zones.id
 WHERE user_id = ?
@@ -23,36 +23,26 @@ type GetOwnerByUserIdAndZoneParams struct {
 }
 
 type GetOwnerByUserIdAndZoneRow struct {
-	ID      int64  `json:"id"`
-	ZoneID  int64  `json:"zone_id"`
-	UserID  string `json:"user_id"`
-	ID_2    int64  `json:"id_2"`
-	Name    string `json:"name"`
-	Serial  int64  `json:"serial"`
-	Admin   string `json:"admin"`
-	Refresh int32  `json:"refresh"`
-	Retry   int32  `json:"retry"`
-	Expire  int32  `json:"expire"`
-	Ttl     int32  `json:"ttl"`
-	Active  bool   `json:"active"`
+	Owner Owner `json:"owner"`
+	Zone  Zone  `json:"zone"`
 }
 
 func (q *Queries) GetOwnerByUserIdAndZone(ctx context.Context, arg GetOwnerByUserIdAndZoneParams) (GetOwnerByUserIdAndZoneRow, error) {
 	row := q.db.QueryRowContext(ctx, getOwnerByUserIdAndZone, arg.UserID, arg.Name)
 	var i GetOwnerByUserIdAndZoneRow
 	err := row.Scan(
-		&i.ID,
-		&i.ZoneID,
-		&i.UserID,
-		&i.ID_2,
-		&i.Name,
-		&i.Serial,
-		&i.Admin,
-		&i.Refresh,
-		&i.Retry,
-		&i.Expire,
-		&i.Ttl,
-		&i.Active,
+		&i.Owner.ID,
+		&i.Owner.ZoneID,
+		&i.Owner.UserID,
+		&i.Zone.ID,
+		&i.Zone.Name,
+		&i.Zone.Serial,
+		&i.Zone.Admin,
+		&i.Zone.Refresh,
+		&i.Zone.Retry,
+		&i.Zone.Expire,
+		&i.Zone.Ttl,
+		&i.Zone.Active,
 	)
 	return i, err
 }
