@@ -9,6 +9,7 @@ import (
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
+	"github.com/1f349/verbena/rest"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
@@ -17,6 +18,20 @@ import (
 type zoneQueries interface {
 	GetOwnedZones(ctx context.Context, userID string) ([]database.GetOwnedZonesRow, error)
 	GetZone(ctx context.Context, id int64) (database.Zone, error)
+}
+
+func ZoneToRestZone(zone database.Zone) rest.Zone {
+	return rest.Zone{
+		ID:      zone.ID,
+		Name:    zone.Name,
+		Serial:  zone.Serial,
+		Admin:   zone.Admin,
+		Refresh: zone.Refresh,
+		Retry:   zone.Retry,
+		Expire:  zone.Expire,
+		Ttl:     zone.Ttl,
+		Active:  zone.Active,
+	}
 }
 
 func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
@@ -29,12 +44,12 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 			return
 		}
 
-		outZones := make([]database.Zone, 0, len(zones))
+		outZones := make([]rest.Zone, 0, len(zones))
 		for _, z := range zones {
 			if !b.Claims.Perms.Has("verbena-zone:" + z.Zone.Name) {
 				continue
 			}
-			outZones = append(outZones, z.Zone)
+			outZones = append(outZones, ZoneToRestZone(z.Zone))
 		}
 
 		json.NewEncoder(rw).Encode(outZones)
@@ -63,7 +78,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 			http.NotFound(rw, req)
 			return
 		}
-		json.NewEncoder(rw).Encode(zone)
+		json.NewEncoder(rw).Encode(ZoneToRestZone(zone))
 	}))
 }
 

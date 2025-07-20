@@ -7,6 +7,7 @@ import (
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
+	"github.com/1f349/verbena/rest"
 	"github.com/go-chi/chi/v5"
 	"github.com/gobuffalo/nulls"
 	"net/http"
@@ -22,18 +23,8 @@ type recordQueries interface {
 	DeleteRecordFromApi(ctx context.Context, row database.DeleteRecordFromApiParams) error
 }
 
-type ApiRecord struct {
-	ID     int64       `json:"id"`
-	Name   string      `json:"name"`
-	ZoneID int64       `json:"zone_id"`
-	Ttl    nulls.Int32 `json:"ttl"`
-	Type   string      `json:"type"`
-	Value  string      `json:"value"`
-	Active bool        `json:"active"`
-}
-
-func RecordToApiRecord(record database.Record) ApiRecord {
-	return ApiRecord{
+func RecordToRestRecord(record database.Record) rest.Record {
+	return rest.Record{
 		ID:     record.ID,
 		Name:   record.Name,
 		ZoneID: record.ZoneID,
@@ -61,12 +52,12 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			records := make([]ApiRecord, 0, len(rows))
+			records := make([]rest.Record, 0, len(rows))
 			for _, record := range rows {
 				if !b.Claims.Perms.Has("verbena-zone:" + record.Name) {
 					continue
 				}
-				records = append(records, RecordToApiRecord(record.Record))
+				records = append(records, RecordToRestRecord(record.Record))
 			}
 
 			json.NewEncoder(rw).Encode(records)
@@ -101,7 +92,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			json.NewEncoder(rw).Encode(RecordToApiRecord(row.Record))
+			json.NewEncoder(rw).Encode(RecordToRestRecord(row.Record))
 		}))
 
 		// Create record
@@ -155,7 +146,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			json.NewEncoder(rw).Encode(ApiRecord{
+			json.NewEncoder(rw).Encode(rest.Record{
 				ID:     genId,
 				Name:   record.Name,
 				ZoneID: zoneId,
@@ -218,7 +209,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			json.NewEncoder(rw).Encode(ApiRecord{
+			json.NewEncoder(rw).Encode(rest.Record{
 				ID:     recordId,
 				Name:   originalRecord.Record.Name,
 				ZoneID: zoneId,
