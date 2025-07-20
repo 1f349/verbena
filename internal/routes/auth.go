@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -16,7 +17,13 @@ import (
 	"time"
 )
 
-func AddAuthRoutes(r *chi.Mux, db *database.Queries, userKeystore *mjwt.KeyStore, apiIssuer *mjwt.Issuer) {
+type authQueries interface {
+	GetOwnerByUserIdAndZone(ctx context.Context, arg database.GetOwnerByUserIdAndZoneParams) (database.GetOwnerByUserIdAndZoneRow, error)
+	RegisterBotToken(ctx context.Context, arg database.RegisterBotTokenParams) (int64, error)
+	BotTokenExists(ctx context.Context, id int64) (database.BotToken, error)
+}
+
+func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiIssuer *mjwt.Issuer) {
 	r.Post("/bot-token", validateAuthToken[auth.AccessTokenClaims](userKeystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 		var createBody struct {
 			Zone string `json:"zone"`
@@ -86,7 +93,7 @@ func AddAuthRoutes(r *chi.Mux, db *database.Queries, userKeystore *mjwt.KeyStore
 		case err == nil:
 			break
 		case errors.Is(err, sql.ErrNoRows):
-			http.Error(rw, "Invalid token", http.StatusNotFound)
+			http.Error(rw, "Invalid token", http.StatusUnauthorized)
 			return
 		case err != nil:
 			http.Error(rw, "Database error", http.StatusInternalServerError)
