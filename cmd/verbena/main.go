@@ -79,7 +79,7 @@ func main() {
 	zonesPath := filepath.Join(wd, config.ZonePath)
 	err = os.Mkdir(zonesPath, 0700)
 	if err != nil && !errors.Is(err, fs.ErrExist) {
-		logger.Logger.Fatal("Failed to create zone path directory", "err", err)
+		logger.Logger.Fatal("Failed to create zone directory", "err", err)
 	}
 
 	// Do an upgrade on SIGHUP
@@ -94,15 +94,21 @@ func main() {
 		}
 	}()
 
+	keysPath := filepath.Join(wd, "keys")
+	err = os.Mkdir(keysPath, 0700)
+	if err != nil && !errors.Is(err, fs.ErrExist) {
+		logger.Logger.Fatal("Failed to create keys directory", "err", err)
+	}
+
 	// load the MJWT RSA public key from a pem encoded file
-	apiKeystore, err := mjwt.NewKeyStoreFromPath(filepath.Join(wd, "keys"))
+	apiKeystore, err := mjwt.NewKeyStoreFromPath(keysPath)
 	if err != nil {
 		logger.Logger.Fatal("Failed to load MJWT verifier public key from file", "path", filepath.Join(wd, "keys"), "err", err)
 	}
 
 	apiIssuer, err := mjwt.NewIssuerWithKeyStore("Verbena", config.TokenIssuer, jwt.SigningMethodHS512, apiKeystore)
 	if err != nil {
-		logger.Logger.Fatal("Failed to load MJWT issuer private key")
+		logger.Logger.Fatal("Failed to load MJWT issuer private key", "err", err)
 	}
 
 	db, err := database.InitDB(config.DB)
