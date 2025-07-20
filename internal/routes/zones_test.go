@@ -76,8 +76,21 @@ func TestAddZoneRoutes(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/zones", nil)
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("verbena-zone:example.org")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "[]\n", rec.Body.String())
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodGet, "/zones", nil)
+		ps = auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -96,8 +109,20 @@ func TestAddZoneRoutes(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/zones/3456", nil)
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("verbena-zone:example.org")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodGet, "/zones/3456", nil)
+		ps = auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
 		if err != nil {
 			t.Fatal(err)
 		}

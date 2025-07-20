@@ -154,8 +154,20 @@ func TestAddRecordRoutes(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/zones/3456/records", nil)
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("verbena-zone:example.org")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodGet, "/zones/3456/records", nil)
+		ps = auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -174,8 +186,20 @@ func TestAddRecordRoutes(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/zones/3456/records/1", nil)
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("verbena-zone:example.org")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodGet, "/zones/3456/records/1", nil)
+		ps = auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -200,8 +224,26 @@ func TestAddRecordRoutes(t *testing.T) {
 	"active": true
 }`))
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("verbena-zone:example.org")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodPost, "/zones/3456/records", strings.NewReader(`{
+  "name": "test",
+	"ttl": null,
+	"type": "AAAA",
+	"value": "2001:db8::6",
+	"active": true
+}`))
+		ps = auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -224,8 +266,24 @@ func TestAddRecordRoutes(t *testing.T) {
 	"active": true
 }`))
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("verbena-zone:example.org")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodPut, "/zones/3456/records/2", strings.NewReader(`{
+	"ttl": null,
+	"value": "2001:db8::7",
+	"active": true
+}`))
+		ps = auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -244,8 +302,20 @@ func TestAddRecordRoutes(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodDelete, "/zones/3456/records/2", nil)
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("verbena-zone:example.org")
 		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodDelete, "/zones/3456/records/2", nil)
+		ps = auth.NewPermStorage()
+		ps.Set("verbena-zone:example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
 		if err != nil {
 			t.Fatal(err)
 		}

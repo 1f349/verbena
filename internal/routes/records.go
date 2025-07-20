@@ -197,6 +197,11 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
+			if !b.Claims.Perms.Has("verbena-zone:" + originalRecord.Name) {
+				http.NotFound(rw, req)
+				return
+			}
+
 			err = db.UpdateRecordFromApi(req.Context(), database.UpdateRecordFromApiParams{
 				PreTtl:    record.Ttl,
 				PreValue:  record.Value,
@@ -231,6 +236,16 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 			recordId, err := getRecordId(req)
 			if err != nil {
 				http.Error(rw, "Invalid record ID", http.StatusBadRequest)
+				return
+			}
+
+			originalRecord, err := db.GetZoneRecord(req.Context(), database.GetZoneRecordParams{
+				RecordID: recordId,
+				ZoneID:   zoneId,
+			})
+
+			if !b.Claims.Perms.Has("verbena-zone:" + originalRecord.Name) {
+				http.NotFound(rw, req)
 				return
 			}
 
