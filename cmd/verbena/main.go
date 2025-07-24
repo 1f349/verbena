@@ -152,7 +152,7 @@ func main() {
 	routes.AddRecordRoutes(r, db, apiKeystore)
 	routes.AddAuthRoutes(r, db, apiKeystore, apiIssuer)
 
-	zoneBuilder, err := builder.New(db, time.Duration(config.GeneratorTick), zonesPath, []string{"ns1.example.net", "ns2.example.net", "ns3.example.net"})
+	zoneBuilder, err := builder.New(db, time.Duration(config.GeneratorTick), zonesPath, config.Nameservers)
 	if err != nil {
 		logger.Logger.Fatal("Failed to initialise zone builder", "err", err)
 	}
