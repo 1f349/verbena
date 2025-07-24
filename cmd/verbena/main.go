@@ -134,6 +134,7 @@ func main() {
 	r.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			rw.Header().Add("Server", "Verbena")
+			handler.ServeHTTP(rw, req)
 		})
 	})
 
