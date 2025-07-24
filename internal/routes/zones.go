@@ -46,7 +46,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 
 		outZones := make([]rest.Zone, 0, len(zones))
 		for _, z := range zones {
-			if !b.Claims.Perms.Has("verbena-zone:" + z.Zone.Name) {
+			if !b.Claims.Perms.Has("domain:owns=" + z.Zone.Name) {
 				continue
 			}
 			outZones = append(outZones, ZoneToRestZone(z.Zone))
@@ -74,7 +74,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 			return
 		}
 
-		if !b.Claims.Perms.Has("verbena-zone:" + zone.Name) {
+		if !b.Claims.Perms.Has("domain:owns=" + zone.Name) {
 			http.NotFound(rw, req)
 			return
 		}

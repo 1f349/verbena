@@ -101,8 +101,8 @@ func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiI
 		}
 
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:" + zone)
-		sessionToken, err := auth.CreateAccessToken(apiIssuer, "verbena-zone:"+zone, "", jwt.ClaimStrings{
+		ps.Set("domain:owns=" + zone)
+		sessionToken, err := auth.CreateAccessToken(apiIssuer, "domain:owns="+zone, "", jwt.ClaimStrings{
 			"verbena-bot-token",
 		}, ps)
 		if err != nil {

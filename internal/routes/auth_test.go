@@ -87,7 +87,7 @@ func TestAddAuthRoutes(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
 		ps := auth.NewPermStorage()
-		ps.Set("verbena-zone:example.com")
+		ps.Set("domain:owns=example.com")
 		token, err := auth.CreateAccessToken(userIssuer, "1234", "aa", jwt.ClaimStrings{}, ps)
 		if err != nil {
 			t.Fatal(err)

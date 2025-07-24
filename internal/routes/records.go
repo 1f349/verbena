@@ -54,7 +54,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 
 			records := make([]rest.Record, 0, len(rows))
 			for _, record := range rows {
-				if !b.Claims.Perms.Has("verbena-zone:" + record.Name) {
+				if !b.Claims.Perms.Has("domain:owns=" + record.Name) {
 					continue
 				}
 				records = append(records, RecordToRestRecord(record.Record))
@@ -87,7 +87,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			if !b.Claims.Perms.Has("verbena-zone:" + row.Name) {
+			if !b.Claims.Perms.Has("domain:owns=" + row.Name) {
 				http.NotFound(rw, req)
 				return
 			}
@@ -128,7 +128,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			if !b.Claims.Perms.Has("verbena-zone:" + zone.Name) {
+			if !b.Claims.Perms.Has("domain:owns=" + zone.Name) {
 				http.NotFound(rw, req)
 				return
 			}
@@ -197,7 +197,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			if !b.Claims.Perms.Has("verbena-zone:" + originalRecord.Name) {
+			if !b.Claims.Perms.Has("domain:owns=" + originalRecord.Name) {
 				http.NotFound(rw, req)
 				return
 			}
@@ -244,7 +244,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				ZoneID:   zoneId,
 			})
 
-			if !b.Claims.Perms.Has("verbena-zone:" + originalRecord.Name) {
+			if !b.Claims.Perms.Has("domain:owns=" + originalRecord.Name) {
 				http.NotFound(rw, req)
 				return
 			}
