@@ -142,6 +142,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				PreActive: record.Active,
 			})
 			if err != nil {
+				logger.Logger.Debug("Failed to insert record from API", "err", err)
 				http.Error(rw, "Database error occurred", http.StatusInternalServerError)
 				return
 			}
@@ -193,6 +194,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				ZoneID:   zoneId,
 			})
 			if err != nil {
+				logger.Logger.Debug("Failed to get zone record", "err", err)
 				http.Error(rw, "Database error occurred", http.StatusInternalServerError)
 				return
 			}
@@ -210,6 +212,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				ZoneID:    zoneId,
 			})
 			if err != nil {
+				logger.Logger.Debug("Failed to update record from API", "err", err)
 				http.Error(rw, "Database error occurred", http.StatusInternalServerError)
 				return
 			}
@@ -254,6 +257,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				ZoneID:   zoneId,
 			})
 			if err != nil {
+				logger.Logger.Debug("Failed to delete record from API", "err", err)
 				http.Error(rw, "Database error occurred", http.StatusInternalServerError)
 				return
 			}

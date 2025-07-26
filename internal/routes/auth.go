@@ -8,6 +8,7 @@ import (
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
+	"github.com/1f349/verbena/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/miekg/dns"
@@ -47,6 +48,7 @@ func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiI
 			Name:   createBody.Zone,
 		})
 		if err != nil {
+			logger.Logger.Debug("Failed to get owner by user id and zone", "err", err)
 			http.Error(rw, "Database error", http.StatusInternalServerError)
 			return
 		}
@@ -56,6 +58,7 @@ func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiI
 			ZoneID:  ownerRow.Owner.ZoneID,
 		})
 		if err != nil {
+			logger.Logger.Debug("Failed to register bot token", "err", err)
 			http.Error(rw, "Database error", http.StatusInternalServerError)
 			return
 		}
@@ -96,6 +99,7 @@ func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiI
 			http.Error(rw, "Invalid token", http.StatusUnauthorized)
 			return
 		case err != nil:
+			logger.Logger.Debug("Failed to refresh bot token", "err", err)
 			http.Error(rw, "Database error", http.StatusInternalServerError)
 			return
 		}
