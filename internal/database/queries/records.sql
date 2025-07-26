@@ -18,8 +18,8 @@ WHERE records.id = sqlc.arg(record_id)
   AND zones.id = sqlc.arg(zone_id);
 
 -- name: InsertRecordFromApi :execlastid
-INSERT INTO records (name, zone_id, ttl, type, value, active, pre_ttl, pre_value, pre_active)
-VALUES (?, ?, 0, ?, "", 0, ?, ?, ?);
+INSERT INTO records (name, zone_id, ttl, type, value, active, pre_ttl, pre_value, pre_active, pre_delete)
+VALUES (?, ?, 0, ?, "", 0, ?, ?, ?, 0);
 
 -- name: UpdateRecordFromApi :exec
 UPDATE records

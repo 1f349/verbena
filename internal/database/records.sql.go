@@ -179,8 +179,8 @@ func (q *Queries) GetZoneRecords(ctx context.Context, zoneID int64) ([]GetZoneRe
 }
 
 const insertRecordFromApi = `-- name: InsertRecordFromApi :execlastid
-INSERT INTO records (name, zone_id, ttl, type, value, active, pre_ttl, pre_value, pre_active)
-VALUES (?, ?, 0, ?, "", 0, ?, ?, ?)
+INSERT INTO records (name, zone_id, ttl, type, value, active, pre_ttl, pre_value, pre_active, pre_delete)
+VALUES (?, ?, 0, ?, "", 0, ?, ?, ?, 0)
 `
 
 type InsertRecordFromApiParams struct {
