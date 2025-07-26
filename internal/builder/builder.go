@@ -14,19 +14,19 @@ import (
 	"time"
 )
 
-type comitterQueries interface {
+type committerQueries interface {
 	GetZoneActiveRecords(ctx context.Context, zoneID int64) ([]database.Record, error)
 	GetActiveZones(ctx context.Context) ([]database.Zone, error)
 }
 
 type Builder struct {
-	db          comitterQueries
+	db          committerQueries
 	genTick     time.Duration
 	dir         string
 	nameservers []string
 }
 
-func New(db comitterQueries, genTick time.Duration, dir string, nameservers []string) (*Builder, error) {
+func New(db committerQueries, genTick time.Duration, dir string, nameservers []string) (*Builder, error) {
 	if len(nameservers) < 3 {
 		return nil, fmt.Errorf("at least 3 nameservers are required")
 	}
