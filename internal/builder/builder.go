@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -24,6 +25,7 @@ type Builder struct {
 	genTick     time.Duration
 	dir         string
 	nameservers []string
+	genLock     sync.Mutex
 }
 
 func New(db committerQueries, genTick time.Duration, dir string, nameservers []string) (*Builder, error) {
@@ -65,6 +67,9 @@ func (b *Builder) internalTicker() {
 }
 
 func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
+	b.genLock.Lock()
+	defer b.genLock.Unlock()
+
 	records, err := b.db.GetZoneActiveRecords(ctx, zoneInfo.ID)
 	if err != nil {
 		return err
