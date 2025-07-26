@@ -17,8 +17,6 @@ WHERE id = ?;
 -- name: UpdateZoneSerial :exec
 UPDATE zones
 SET serial =
-        CASE
-            WHEN LEFT(serial, 8) = DATE_FORMAT(CURDATE(), '%Y%m%d') THEN serial + 1
-            ELSE CAST(DATE_FORMAT(CURDATE(), '%Y%m%d') AS UNSIGNED) * 100 + 1
-            END
+        IF(LEFT(serial, 8) = DATE_FORMAT(CURDATE(), '%Y%m%d'), serial + 1,
+           CAST(DATE_FORMAT(CURDATE(), '%Y%m%d') AS UNSIGNED) * 100 + 1)
 WHERE id = ?;
