@@ -98,11 +98,10 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 		// Create record
 		r.Post("/", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 			var record struct {
-				Name   string      `json:"name"`
-				Ttl    nulls.Int32 `json:"ttl"`
-				Type   string      `json:"type"`
-				Value  string      `json:"value"`
-				Active bool        `json:"active"`
+				Name  string      `json:"name"`
+				Ttl   nulls.Int32 `json:"ttl"`
+				Type  string      `json:"type"`
+				Value string      `json:"value"`
 			}
 
 			err := json.NewDecoder(req.Body).Decode(&record)
@@ -139,7 +138,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				Type:      record.Type,
 				PreTtl:    record.Ttl,
 				PreValue:  record.Value,
-				PreActive: record.Active,
+				PreActive: true,
 			})
 			if err != nil {
 				logger.Logger.Debug("Failed to insert record from API", "err", err)
@@ -154,7 +153,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				Ttl:    record.Ttl,
 				Type:   record.Type,
 				Value:  record.Value,
-				Active: record.Active,
+				Active: true,
 			})
 		}))
 
