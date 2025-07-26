@@ -17,6 +17,8 @@ type Zone struct {
 	Expire  int32  `json:"expire"`
 	Ttl     int32  `json:"ttl"`
 	Active  bool   `json:"active"`
+
+	Nameservers []string `json:"nameservers"`
 }
 
 func (c *Client) GetZones() ([]database.Zone, error) {

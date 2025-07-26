@@ -65,7 +65,7 @@ func TestAddZoneRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	AddZoneRoutes(r, &zoneTestQueries{}, issuer.KeyStore())
+	AddZoneRoutes(r, &zoneTestQueries{}, issuer.KeyStore(), []string{"ns1.example.com", "ns2.example.com"})
 
 	t.Run("/zones", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -97,7 +97,7 @@ func TestAddZoneRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "[{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true}]\n", rec.Body.String())
+		assert.Equal(t, "[{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true,\"nameservers\":[\"ns1.example.com\",\"ns2.example.com\"]}]\n", rec.Body.String())
 	})
 
 	t.Run("/zones/{id}", func(t *testing.T) {
@@ -129,6 +129,6 @@ func TestAddZoneRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true}\n", rec.Body.String())
+		assert.Equal(t, "{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true,\"nameservers\":[\"ns1.example.com\",\"ns2.example.com\"]}\n", rec.Body.String())
 	})
 }

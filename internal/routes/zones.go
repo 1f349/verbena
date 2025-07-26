@@ -20,7 +20,7 @@ type zoneQueries interface {
 	GetZone(ctx context.Context, id int64) (database.Zone, error)
 }
 
-func ZoneToRestZone(zone database.Zone) rest.Zone {
+func ZoneToRestZone(zone database.Zone, nameservers []string) rest.Zone {
 	return rest.Zone{
 		ID:      zone.ID,
 		Name:    zone.Name,
@@ -31,10 +31,12 @@ func ZoneToRestZone(zone database.Zone) rest.Zone {
 		Expire:  zone.Expire,
 		Ttl:     zone.Ttl,
 		Active:  zone.Active,
+
+		Nameservers: nameservers,
 	}
 }
 
-func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
+func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, nameservers []string) {
 	// List all zones
 	r.Get("/zones", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 		zones, err := db.GetOwnedZones(req.Context(), b.Subject)
@@ -49,7 +51,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 			if !b.Claims.Perms.Has("domain:owns=" + z.Zone.Name) {
 				continue
 			}
-			outZones = append(outZones, ZoneToRestZone(z.Zone))
+			outZones = append(outZones, ZoneToRestZone(z.Zone, nameservers))
 		}
 
 		json.NewEncoder(rw).Encode(outZones)
@@ -78,7 +80,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore) {
 			http.NotFound(rw, req)
 			return
 		}
-		json.NewEncoder(rw).Encode(ZoneToRestZone(zone))
+		json.NewEncoder(rw).Encode(ZoneToRestZone(zone, nameservers))
 	}))
 }
 

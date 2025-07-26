@@ -148,7 +148,7 @@ func main() {
 	})
 
 	// Add routes
-	routes.AddZoneRoutes(r, db, apiKeystore)
+	routes.AddZoneRoutes(r, db, apiKeystore, config.Nameservers)
 	routes.AddRecordRoutes(r, db, apiKeystore)
 	routes.AddAuthRoutes(r, db, apiKeystore, apiIssuer)
 
