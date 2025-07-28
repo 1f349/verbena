@@ -6,6 +6,7 @@ import (
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
+	"github.com/1f349/verbena/internal/utils"
 	"github.com/1f349/verbena/logger"
 	"github.com/1f349/verbena/rest"
 	"github.com/go-chi/chi/v5"
@@ -115,6 +116,11 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
+			if !utils.ValidateRecordValue(record.Type, record.Value) {
+				http.Error(rw, "Invalid value for type", http.StatusBadRequest)
+				return
+			}
+
 			zoneId, err := getZoneId(req)
 			if err != nil {
 				http.Error(rw, "Invalid zone ID", http.StatusBadRequest)
@@ -195,6 +201,11 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 			if err != nil {
 				logger.Logger.Debug("Failed to get zone record", "err", err)
 				http.Error(rw, "Database error occurred", http.StatusInternalServerError)
+				return
+			}
+
+			if !utils.ValidateRecordValue(originalRecord.Record.Type, record.Value) {
+				http.Error(rw, "Invalid value for type", http.StatusBadRequest)
 				return
 			}
 
