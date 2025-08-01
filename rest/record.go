@@ -15,22 +15,22 @@ type Record struct {
 	ZoneID int64       `json:"zone_id"`
 	Ttl    nulls.Int32 `json:"ttl"`
 	Type   string      `json:"type"`
-	Value  string      `json:"value"`
-	Active bool        `json:"active"`
+	RecordValue
+	Active bool `json:"active"`
 }
 
 type CreateRecord struct {
-	Name   string      `json:"name"`
-	Ttl    nulls.Int32 `json:"ttl"`
-	Type   string      `json:"type"`
-	Value  string      `json:"value"`
-	Active bool        `json:"active"`
+	Name string      `json:"name"`
+	Ttl  nulls.Int32 `json:"ttl"`
+	Type string      `json:"type"`
+	RecordValue
+	Active bool `json:"active"`
 }
 
 type PutRecord struct {
-	Ttl    nulls.Int32 `json:"ttl"`
-	Value  string      `json:"value"`
-	Active bool        `json:"active"`
+	Ttl nulls.Int32 `json:"ttl"`
+	RecordValue
+	Active bool `json:"active"`
 }
 
 func (c *Client) GetZoneRecords(zoneId int64) ([]Record, error) {

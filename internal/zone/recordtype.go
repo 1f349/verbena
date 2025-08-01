@@ -5,7 +5,8 @@ import "fmt"
 type RecordType uint8
 
 const (
-	NS RecordType = iota
+	invalidRecordType RecordType = iota
+	NS
 	MX
 	A
 	AAAA
@@ -17,8 +18,8 @@ const (
 )
 
 func (t RecordType) IsValid() bool {
-	return t <= TXT
-	//return t <= CAA
+	return t > invalidRecordType && t <= TXT
+	//return t > invalidRecordType && t <= CAA
 }
 
 var recordTypeToString = []string{
@@ -36,7 +37,7 @@ func (t RecordType) String() string {
 	if !t.IsValid() {
 		return fmt.Sprintf("%%!RecordType(%d)", uint8(t))
 	}
-	return recordTypeToString[t]
+	return recordTypeToString[t-1]
 }
 
 var stringToRecordType = map[string]RecordType{
@@ -50,7 +51,6 @@ var stringToRecordType = map[string]RecordType{
 	//"CAA":   CAA,
 }
 
-func RecordTypeFromString(s string) (RecordType, bool) {
-	recordType, ok := stringToRecordType[s]
-	return recordType, ok
+func RecordTypeFromString(s string) RecordType {
+	return stringToRecordType[s]
 }

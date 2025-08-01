@@ -24,16 +24,28 @@ type recordQueries interface {
 	DeleteRecordFromApi(ctx context.Context, row database.DeleteRecordFromApiParams) error
 }
 
-func RecordToRestRecord(record database.Record) rest.Record {
-	return rest.Record{
-		ID:     record.ID,
-		Name:   record.Name,
-		ZoneID: record.ZoneID,
-		Ttl:    record.PreTtl,
-		Type:   record.Type,
-		Value:  record.PreValue,
-		Active: record.PreActive,
+func RecordToRestRecord(record database.Record) (rest.Record, error) {
+	v, err := rest.ParseRecordValue(record.Type, record.PreValue)
+	if err != nil {
+		return rest.Record{}, err
 	}
+	return rest.Record{
+		ID:          record.ID,
+		Name:        record.Name,
+		ZoneID:      record.ZoneID,
+		Ttl:         record.PreTtl,
+		Type:        record.Type,
+		Active:      record.PreActive,
+		RecordValue: v,
+	}, nil
+}
+
+func appendRecord(slice []rest.Record, record database.Record) []rest.Record {
+	record2, err := RecordToRestRecord(record)
+	if err != nil {
+		return slice
+	}
+	return append(slice, record2)
 }
 
 func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
@@ -58,7 +70,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				if !b.Claims.Perms.Has("domain:owns=" + record.Name) {
 					continue
 				}
-				records = append(records, RecordToRestRecord(record.Record))
+				records = appendRecord(records, record.Record)
 			}
 
 			json.NewEncoder(rw).Encode(records)
@@ -93,16 +105,22 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			json.NewEncoder(rw).Encode(RecordToRestRecord(row.Record))
+			record, err := RecordToRestRecord(row.Record)
+			if err != nil {
+				http.Error(rw, "Server error occurred", http.StatusInternalServerError)
+				return
+			}
+
+			json.NewEncoder(rw).Encode(record)
 		}))
 
 		// Create record
 		r.Post("/", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 			var record struct {
-				Name  string      `json:"name"`
-				Ttl   nulls.Int32 `json:"ttl"`
-				Type  string      `json:"type"`
-				Value string      `json:"value"`
+				Name string      `json:"name"`
+				Ttl  nulls.Int32 `json:"ttl"`
+				Type string      `json:"type"`
+				rest.RecordValue
 			}
 
 			err := json.NewDecoder(req.Body).Decode(&record)
@@ -153,13 +171,13 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 			}
 
 			json.NewEncoder(rw).Encode(rest.Record{
-				ID:     genId,
-				Name:   record.Name,
-				ZoneID: zoneId,
-				Ttl:    record.Ttl,
-				Type:   record.Type,
-				Value:  record.Value,
-				Active: true,
+				ID:          genId,
+				Name:        record.Name,
+				ZoneID:      zoneId,
+				Ttl:         record.Ttl,
+				Type:        record.Type,
+				Active:      true,
+				RecordValue: record.RecordValue,
 			})
 		}))
 
@@ -167,8 +185,8 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 		r.Put("/{record_id:[0-9]+}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 			var record struct {
 				Ttl    nulls.Int32 `json:"ttl"`
-				Value  string      `json:"value"`
 				Active bool        `json:"active"`
+				rest.RecordValue
 			}
 
 			err := json.NewDecoder(req.Body).Decode(&record)
@@ -228,13 +246,13 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 			}
 
 			json.NewEncoder(rw).Encode(rest.Record{
-				ID:     recordId,
-				Name:   originalRecord.Record.Name,
-				ZoneID: zoneId,
-				Ttl:    record.Ttl,
-				Type:   originalRecord.Record.Type,
-				Value:  record.Value,
-				Active: record.Active,
+				ID:          recordId,
+				Name:        originalRecord.Record.Name,
+				ZoneID:      zoneId,
+				Ttl:         record.Ttl,
+				Type:        originalRecord.Record.Type,
+				Active:      record.Active,
+				RecordValue: record.RecordValue,
 			})
 		}))
 
