@@ -6,7 +6,6 @@ import (
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
-	"github.com/1f349/verbena/internal/utils"
 	"github.com/1f349/verbena/logger"
 	"github.com/1f349/verbena/rest"
 	"github.com/go-chi/chi/v5"
@@ -134,7 +133,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			if !utils.ValidateRecordValue(record.Type, record.Value) {
+			if !record.RecordValue.IsValidForType(record.Type) {
 				http.Error(rw, "Invalid value for type", http.StatusBadRequest)
 				return
 			}
@@ -222,7 +221,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			if !utils.ValidateRecordValue(originalRecord.Record.Type, record.Value) {
+			if !record.RecordValue.IsValidForType(originalRecord.Record.Type) {
 				http.Error(rw, "Invalid value for type", http.StatusBadRequest)
 				return
 			}
