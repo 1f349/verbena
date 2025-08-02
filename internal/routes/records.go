@@ -29,13 +29,13 @@ func RecordToRestRecord(record database.Record) (rest.Record, error) {
 		return rest.Record{}, err
 	}
 	return rest.Record{
-		ID:          record.ID,
-		Name:        record.Name,
-		ZoneID:      record.ZoneID,
-		Ttl:         record.PreTtl,
-		Type:        record.Type,
-		Active:      record.PreActive,
-		RecordValue: v,
+		ID:     record.ID,
+		Name:   record.Name,
+		ZoneID: record.ZoneID,
+		Ttl:    record.PreTtl,
+		Type:   record.Type,
+		Active: record.PreActive,
+		Value:  v,
 	}, nil
 }
 
@@ -116,10 +116,10 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 		// Create record
 		r.Post("/", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 			var record struct {
-				Name string      `json:"name"`
-				Ttl  nulls.Int32 `json:"ttl"`
-				Type string      `json:"type"`
-				rest.RecordValue
+				Name  string           `json:"name"`
+				Ttl   nulls.Int32      `json:"ttl"`
+				Type  string           `json:"type"`
+				Value rest.RecordValue `json:"value"`
 			}
 
 			err := json.NewDecoder(req.Body).Decode(&record)
@@ -133,7 +133,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			if !record.RecordValue.IsValidForType(record.Type) {
+			if !record.Value.IsValidForType(record.Type) {
 				http.Error(rw, "Invalid value for type", http.StatusBadRequest)
 				return
 			}
@@ -160,7 +160,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				ZoneID:    zoneId,
 				Type:      record.Type,
 				PreTtl:    record.Ttl,
-				PreValue:  record.Value,
+				PreValue:  record.Value.ToValueString(record.Type),
 				PreActive: true,
 			})
 			if err != nil {
@@ -170,22 +170,22 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 			}
 
 			json.NewEncoder(rw).Encode(rest.Record{
-				ID:          genId,
-				Name:        record.Name,
-				ZoneID:      zoneId,
-				Ttl:         record.Ttl,
-				Type:        record.Type,
-				Active:      true,
-				RecordValue: record.RecordValue,
+				ID:     genId,
+				Name:   record.Name,
+				ZoneID: zoneId,
+				Ttl:    record.Ttl,
+				Type:   record.Type,
+				Active: true,
+				Value:  record.Value,
 			})
 		}))
 
 		// Update record
 		r.Put("/{record_id:[0-9]+}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 			var record struct {
-				Ttl    nulls.Int32 `json:"ttl"`
-				Active bool        `json:"active"`
-				rest.RecordValue
+				Ttl    nulls.Int32      `json:"ttl"`
+				Active bool             `json:"active"`
+				Value  rest.RecordValue `json:"value"`
 			}
 
 			err := json.NewDecoder(req.Body).Decode(&record)
@@ -221,7 +221,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			if !record.RecordValue.IsValidForType(originalRecord.Record.Type) {
+			if !record.Value.IsValidForType(originalRecord.Record.Type) {
 				http.Error(rw, "Invalid value for type", http.StatusBadRequest)
 				return
 			}
@@ -233,7 +233,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 
 			err = db.UpdateRecordFromApi(req.Context(), database.UpdateRecordFromApiParams{
 				PreTtl:    record.Ttl,
-				PreValue:  record.Value,
+				PreValue:  record.Value.ToValueString(originalRecord.Record.Type),
 				PreActive: record.Active,
 				ID:        recordId,
 				ZoneID:    zoneId,
@@ -245,13 +245,13 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 			}
 
 			json.NewEncoder(rw).Encode(rest.Record{
-				ID:          recordId,
-				Name:        originalRecord.Record.Name,
-				ZoneID:      zoneId,
-				Ttl:         record.Ttl,
-				Type:        originalRecord.Record.Type,
-				Active:      record.Active,
-				RecordValue: record.RecordValue,
+				ID:     recordId,
+				Name:   originalRecord.Record.Name,
+				ZoneID: zoneId,
+				Ttl:    record.Ttl,
+				Type:   originalRecord.Record.Type,
+				Active: record.Active,
+				Value:  record.Value,
 			})
 		}))
 

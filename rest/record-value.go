@@ -2,6 +2,7 @@ package rest
 
 import (
 	"errors"
+	"fmt"
 	"github.com/1f349/verbena/internal/utils"
 	"github.com/1f349/verbena/internal/zone"
 	"net/netip"
@@ -10,16 +11,16 @@ import (
 )
 
 type RecordValue struct {
-	Text       string     `json:"text,omitempty"`
-	Target     string     `json:"target,omitempty"`
-	IP         netip.Addr `json:"ip,omitempty"`
-	Preference int32      `json:"preference,omitempty"`
-	Priority   int32      `json:"priority,omitempty"`
-	Weight     int32      `json:"weight,omitempty"`
-	Port       uint16     `json:"port,omitempty"`
-	Flags      uint8      `json:"flags,omitempty"`
-	Tag        string     `json:"tag,omitempty"`
-	Value      string     `json:"value,omitempty"`
+	Text       string      `json:"text,omitempty"`
+	Target     string      `json:"target,omitempty"`
+	IP         *netip.Addr `json:"ip,omitempty"`
+	Preference int32       `json:"preference,omitempty"`
+	Priority   int32       `json:"priority,omitempty"`
+	Weight     int32       `json:"weight,omitempty"`
+	Port       uint16      `json:"port,omitempty"`
+	Flags      uint8       `json:"flags,omitempty"`
+	Tag        string      `json:"tag,omitempty"`
+	Value      string      `json:"value,omitempty"`
 }
 
 func (v RecordValue) IsValidForType(recordType string) bool {
@@ -37,8 +38,36 @@ func (v RecordValue) IsValidForType(recordType string) bool {
 		return utils.ValidateDomainName(v.Target)
 	case zone.TXT:
 		return v.Text != ""
+	case zone.SRV:
+		return v.Priority > 0 && v.Weight >= 0 && v.Port > 0 && utils.ValidateDomainName(v.Target)
+	case zone.CAA:
+		return (v.Tag == "issue" || v.Tag == "issuewild") && !strings.ContainsAny(v.Value, "\t")
 	default:
 		return false
+	}
+}
+
+func (v RecordValue) ToValueString(recordType string) string {
+	ty := zone.RecordTypeFromString(recordType)
+	switch ty {
+	case zone.NS:
+		return v.Target
+	case zone.MX:
+		return fmt.Sprintf("%d %s", v.Preference, v.Target)
+	case zone.A:
+		return v.IP.String()
+	case zone.AAAA:
+		return v.IP.String()
+	case zone.CNAME:
+		return v.Target
+	case zone.TXT:
+		return v.Text
+	case zone.SRV:
+		return fmt.Sprintf("%d %d %d %s", v.Priority, v.Weight, v.Port, v.Target)
+	case zone.CAA:
+		return fmt.Sprintf("%d %s %s", v.Flags, v.Tag, v.Value)
+	default:
+		return ""
 	}
 }
 
@@ -71,13 +100,13 @@ func ParseRecordValue(recordType string, value string) (RecordValue, error) {
 		if err != nil || !v4.Is4() {
 			return RecordValue{}, errors.New("invalid A record")
 		}
-		return RecordValue{IP: v4}, nil
+		return RecordValue{IP: &v4}, nil
 	case zone.AAAA:
 		v6, err := netip.ParseAddr(value)
 		if err != nil || !v6.Is6() {
 			return RecordValue{}, errors.New("invalid AAAA record")
 		}
-		return RecordValue{IP: v6}, nil
+		return RecordValue{IP: &v6}, nil
 	case zone.CNAME:
 		if !utils.ValidateDomainName(value) {
 			return RecordValue{}, errors.New("invalid CNAME record")
