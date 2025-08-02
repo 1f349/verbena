@@ -31,9 +31,9 @@ func (v RecordValue) IsValidForType(recordType string) bool {
 	case zone.MX:
 		return v.Preference > 0 && utils.ValidateDomainName(v.Target)
 	case zone.A:
-		return v.IP.Is4()
+		return v.IP != nil && v.IP.Is4()
 	case zone.AAAA:
-		return v.IP.Is6()
+		return v.IP != nil && v.IP.Is6()
 	case zone.CNAME:
 		return utils.ValidateDomainName(v.Target)
 	case zone.TXT:
@@ -55,8 +55,14 @@ func (v RecordValue) ToValueString(recordType string) string {
 	case zone.MX:
 		return fmt.Sprintf("%d %s", v.Preference, v.Target)
 	case zone.A:
+		if v.IP == nil {
+			return "0.0.0.0"
+		}
 		return v.IP.String()
 	case zone.AAAA:
+		if v.IP == nil {
+			return "::"
+		}
 		return v.IP.String()
 	case zone.CNAME:
 		return v.Target
