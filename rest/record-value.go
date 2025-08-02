@@ -53,7 +53,7 @@ func (v RecordValue) ToValueString(recordType string) string {
 	case zone.NS:
 		return v.Target
 	case zone.MX:
-		return fmt.Sprintf("%d %s", v.Preference, v.Target)
+		return fmt.Sprintf("%d\t%s", v.Preference, v.Target)
 	case zone.A:
 		if v.IP == nil {
 			return "0.0.0.0"
@@ -69,9 +69,9 @@ func (v RecordValue) ToValueString(recordType string) string {
 	case zone.TXT:
 		return v.Text
 	case zone.SRV:
-		return fmt.Sprintf("%d %d %d %s", v.Priority, v.Weight, v.Port, v.Target)
+		return fmt.Sprintf("%d\t%d\t%d\t%s", v.Priority, v.Weight, v.Port, v.Target)
 	case zone.CAA:
-		return fmt.Sprintf("%d %s %s", v.Flags, v.Tag, v.Value)
+		return fmt.Sprintf("%d\t%s\t%s", v.Flags, v.Tag, v.Value)
 	default:
 		return ""
 	}
