@@ -11,6 +11,21 @@ import (
 	"github.com/gobuffalo/nulls"
 )
 
+const commitDeletedZoneRecords = `-- name: CommitDeletedZoneRecords :execrows
+DELETE
+FROM records
+WHERE zone_id = ?
+  AND pre_delete = true
+`
+
+func (q *Queries) CommitDeletedZoneRecords(ctx context.Context, zoneID int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, commitDeletedZoneRecords, zoneID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const commitZoneRecords = `-- name: CommitZoneRecords :execrows
 UPDATE records
 SET ttl    = pre_ttl,
@@ -23,6 +38,7 @@ WHERE zone_id = ?
         OR (` + "`" + `value` + "`" + ` != pre_value)
         OR (active != pre_active)
     )
+  AND pre_delete = false
 `
 
 func (q *Queries) CommitZoneRecords(ctx context.Context, zoneID int64) (int64, error) {
@@ -38,6 +54,7 @@ UPDATE records
 SET pre_delete = TRUE
 WHERE id = ?
   AND zone_id = ?
+  AND pre_delete = false
 `
 
 type DeleteRecordFromApiParams struct {
@@ -55,6 +72,7 @@ SELECT id, name, zone_id, ttl, type, value, active, pre_ttl, pre_value, pre_acti
 FROM records
 WHERE active = 1
   AND zone_id = ?
+  AND pre_delete = false
 `
 
 func (q *Queries) GetZoneActiveRecords(ctx context.Context, zoneID int64) ([]Record, error) {
@@ -98,6 +116,7 @@ FROM records
          INNER JOIN zones ON records.zone_id = zones.id
 WHERE records.id = ?
   AND zones.id = ?
+  AND pre_delete = false
 `
 
 type GetZoneRecordParams struct {
@@ -135,6 +154,7 @@ SELECT records.id, records.name, records.zone_id, records.ttl, records.type, rec
 FROM records
          INNER JOIN zones ON records.zone_id = zones.id
 WHERE zone_id = ?
+  AND pre_delete = false
 `
 
 type GetZoneRecordsRow struct {
@@ -214,6 +234,7 @@ SET pre_ttl    = ?,
     pre_active = ?
 WHERE id = ?
   AND zone_id = ?
+  AND pre_delete = false
 `
 
 type UpdateRecordFromApiParams struct {

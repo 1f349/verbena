@@ -61,7 +61,11 @@ func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
 		if err != nil {
 			return err
 		}
-		if rowsUpdated > 0 {
+		rowsDeleted, err := tx.CommitDeletedZoneRecords(ctx, zone.ID)
+		if err != nil {
+			return err
+		}
+		if rowsUpdated+rowsDeleted > 0 {
 			err = tx.UpdateZoneSerial(ctx, zone.ID)
 			if err != nil {
 				return err
