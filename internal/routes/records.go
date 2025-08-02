@@ -26,6 +26,7 @@ type recordQueries interface {
 func RecordToRestRecord(record database.Record) (rest.Record, error) {
 	v, err := rest.ParseRecordValue(record.Type, record.PreValue)
 	if err != nil {
+		logger.Logger.Debug("Failed to call RecordToRestRecord", "id", record.ID, "zone id", record.ZoneID, "type", record.Type, "pre-value", record.PreValue, "error", err)
 		return rest.Record{}, err
 	}
 	return rest.Record{
