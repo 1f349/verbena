@@ -2,47 +2,41 @@ package rest
 
 import (
 	"errors"
+	"github.com/1f349/verbena/internal/utils"
 	"github.com/1f349/verbena/internal/zone"
-	"github.com/miekg/dns"
 	"net/netip"
+	"strconv"
+	"strings"
 )
 
 type RecordValue struct {
-	Value    string `json:"value"`
-	Priority int32  `json:"priority,omitempty"`
-	Weight   int32  `json:"weight,omitempty"`
-	Port     uint16 `json:"port,omitempty"`
+	Text       string     `json:"text,omitempty"`
+	Target     string     `json:"target,omitempty"`
+	IP         netip.Addr `json:"ip,omitempty"`
+	Preference int32      `json:"preference,omitempty"`
+	Priority   int32      `json:"priority,omitempty"`
+	Weight     int32      `json:"weight,omitempty"`
+	Port       uint16     `json:"port,omitempty"`
+	Flags      uint8      `json:"flags,omitempty"`
+	Tag        string     `json:"tag,omitempty"`
+	Value      string     `json:"value,omitempty"`
 }
 
 func (v RecordValue) IsValidForType(recordType string) bool {
 	ty := zone.RecordTypeFromString(recordType)
 	switch ty {
 	case zone.NS:
-		return v.Priority == 0 && v.Weight == 0 && v.Port == 0 && validDomainName(v.Value)
+		return utils.ValidateDomainName(v.Target)
 	case zone.MX:
-		return v.Priority > 0 && v.Weight == 0 && v.Port == 0 && validDomainName(v.Value)
+		return v.Preference > 0 && utils.ValidateDomainName(v.Target)
 	case zone.A:
-		if v.Priority != 0 && v.Weight != 0 && v.Port != 0 {
-			return false
-		}
-		v4, err := netip.ParseAddr(v.Value)
-		if err != nil {
-			return false
-		}
-		return v4.Is4()
+		return v.IP.Is4()
 	case zone.AAAA:
-		if v.Priority != 0 && v.Weight != 0 && v.Port != 0 {
-			return false
-		}
-		v6, err := netip.ParseAddr(v.Value)
-		if err != nil {
-			return false
-		}
-		return v6.Is6()
+		return v.IP.Is6()
 	case zone.CNAME:
-		return v.Priority == 0 && v.Weight == 0 && v.Port == 0 && validDomainName(v.Value)
+		return utils.ValidateDomainName(v.Target)
 	case zone.TXT:
-		return v.Value != "" && v.Priority == 0 && v.Weight == 0 && v.Port == 0
+		return v.Text != ""
 	default:
 		return false
 	}
@@ -52,40 +46,93 @@ func ParseRecordValue(recordType string, value string) (RecordValue, error) {
 	ty := zone.RecordTypeFromString(recordType)
 	switch ty {
 	case zone.NS:
-		if !validDomainName(value) {
+		if !utils.ValidateDomainName(value) {
 			return RecordValue{}, errors.New("invalid NS record")
 		}
-		return RecordValue{Value: value}, nil
+		return RecordValue{Target: value}, nil
 	case zone.MX:
-		if !validDomainName(value) {
+		fields := strings.SplitN(value, "\t", 3)
+		if len(fields) != 2 {
 			return RecordValue{}, errors.New("invalid MX record")
 		}
-		return RecordValue{Value: value}, nil
+		preference, err := strconv.ParseUint(fields[0], 10, 32)
+		if err != nil {
+			return RecordValue{}, errors.New("invalid MX record")
+		}
+		if !utils.ValidateDomainName(fields[1]) {
+			return RecordValue{}, errors.New("invalid MX record")
+		}
+		return RecordValue{
+			Preference: int32(preference),
+			Target:     fields[1],
+		}, nil
 	case zone.A:
 		v4, err := netip.ParseAddr(value)
 		if err != nil || !v4.Is4() {
 			return RecordValue{}, errors.New("invalid A record")
 		}
-		return RecordValue{Value: v4.String()}, nil
+		return RecordValue{IP: v4}, nil
 	case zone.AAAA:
 		v6, err := netip.ParseAddr(value)
 		if err != nil || !v6.Is6() {
 			return RecordValue{}, errors.New("invalid AAAA record")
 		}
-		return RecordValue{Value: v6.String()}, nil
+		return RecordValue{IP: v6}, nil
 	case zone.CNAME:
-		if !validDomainName(value) {
+		if !utils.ValidateDomainName(value) {
 			return RecordValue{}, errors.New("invalid CNAME record")
 		}
-		return RecordValue{Value: value}, nil
+		return RecordValue{Target: value}, nil
 	case zone.TXT:
-		return RecordValue{Value: value}, nil
+		return RecordValue{Text: value}, nil
+	case zone.SRV:
+		fields := strings.SplitN(value, "\t", 5)
+		if len(fields) != 4 {
+			return RecordValue{}, errors.New("invalid SRV record")
+		}
+		// Priority
+		priority, err := strconv.ParseUint(fields[0], 10, 32)
+		if err != nil {
+			return RecordValue{}, errors.New("invalid SRV record")
+		}
+		// Weight
+		weight, err := strconv.ParseUint(fields[1], 10, 32)
+		if err != nil {
+			return RecordValue{}, errors.New("invalid SRV record")
+		}
+		// Port
+		port, err := strconv.ParseUint(fields[2], 10, 16)
+		if err != nil {
+			return RecordValue{}, errors.New("invalid SRV record")
+		}
+		// Target
+		if !utils.ValidateDomainName(fields[3]) {
+			return RecordValue{}, errors.New("invalid SRV record")
+		}
+		return RecordValue{
+			Priority: int32(priority),
+			Weight:   int32(weight),
+			Port:     uint16(port),
+			Target:   fields[3],
+		}, nil
+	case zone.CAA:
+		fields := strings.SplitN(value, "\t", 4)
+		if len(fields) != 3 {
+			return RecordValue{}, errors.New("invalid CAA record")
+		}
+		flags, err := strconv.ParseUint(fields[0], 10, 8)
+		if err != nil {
+			return RecordValue{}, errors.New("invalid CAA record")
+		}
+		if fields[1] != "issue" && fields[1] != "issuewild" {
+			return RecordValue{}, errors.New("invalid CAA record")
+		}
+		return RecordValue{
+			Flags: uint8(flags),
+			Tag:   fields[1],
+			Value: fields[2],
+		}, nil
 	default:
 		return RecordValue{}, errors.New("invalid record type")
 	}
-}
-
-func validDomainName(s string) bool {
-	_, ok := dns.IsDomainName(s)
-	return ok
 }

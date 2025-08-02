@@ -174,7 +174,7 @@ func TestAddRecordRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "[{\"id\":1,\"name\":\"\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"value\":\"2001:db8::5\",\"active\":true}]\n", rec.Body.String())
+		assert.Equal(t, "[{\"id\":1,\"name\":\"\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"ip\":\"2001:db8::5\",\"active\":true}]\n", rec.Body.String())
 	})
 
 	t.Run("GET /zones/3456/records/1", func(t *testing.T) {
@@ -206,7 +206,7 @@ func TestAddRecordRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "{\"id\":1,\"name\":\"\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"value\":\"2001:db8::5\",\"active\":true}\n", rec.Body.String())
+		assert.Equal(t, "{\"id\":1,\"name\":\"\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"ip\":\"2001:db8::5\",\"active\":true}\n", rec.Body.String())
 	})
 
 	t.Run("POST /zones/3456/records", func(t *testing.T) {
@@ -220,7 +220,7 @@ func TestAddRecordRoutes(t *testing.T) {
   "name": "test",
 	"ttl": null,
 	"type": "AAAA",
-	"value": "2001:db8::6",
+	"ip": "2001:db8::6",
 	"active": true
 }`))
 		ps := auth.NewPermStorage()
@@ -238,7 +238,7 @@ func TestAddRecordRoutes(t *testing.T) {
   "name": "test",
 	"ttl": null,
 	"type": "AAAA",
-	"value": "2001:db8::6",
+	"ip": "2001:db8::6",
 	"active": true
 }`))
 		ps = auth.NewPermStorage()
@@ -250,7 +250,7 @@ func TestAddRecordRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "{\"id\":2,\"name\":\"test\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"value\":\"2001:db8::6\",\"active\":true}\n", rec.Body.String())
+		assert.Equal(t, "{\"id\":2,\"name\":\"test\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"ip\":\"2001:db8::6\",\"active\":true}\n", rec.Body.String())
 	})
 
 	t.Run("PUT /zones/3456/records/2", func(t *testing.T) {
@@ -262,7 +262,7 @@ func TestAddRecordRoutes(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodPut, "/zones/3456/records/2", strings.NewReader(`{
 	"ttl": null,
-	"value": "2001:db8::7",
+	"ip": "2001:db8::7",
 	"active": true
 }`))
 		ps := auth.NewPermStorage()
@@ -278,7 +278,7 @@ func TestAddRecordRoutes(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodPut, "/zones/3456/records/2", strings.NewReader(`{
 	"ttl": null,
-	"value": "2001:db8::7",
+	"ip": "2001:db8::7",
 	"active": true
 }`))
 		ps = auth.NewPermStorage()
@@ -290,7 +290,7 @@ func TestAddRecordRoutes(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "{\"id\":2,\"name\":\"test\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"value\":\"2001:db8::7\",\"active\":true}\n", rec.Body.String())
+		assert.Equal(t, "{\"id\":2,\"name\":\"test\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"ip\":\"2001:db8::7\",\"active\":true}\n", rec.Body.String())
 	})
 
 	t.Run("DELETE /zones/3456/records/2", func(t *testing.T) {

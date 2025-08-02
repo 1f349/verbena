@@ -12,9 +12,8 @@ const (
 	AAAA
 	CNAME
 	TXT
-	// TODO: add support for SRV and CAA
-	//SRV
-	//CAA
+	SRV
+	CAA
 )
 
 func (t RecordType) IsValid() bool {
