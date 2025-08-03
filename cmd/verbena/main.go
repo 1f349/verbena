@@ -106,7 +106,7 @@ func main() {
 		logger.Logger.Fatal("Failed to load MJWT verifier public key from file", "path", filepath.Join(wd, "keys"), "err", err)
 	}
 
-	apiIssuer, err := mjwt.NewIssuerWithKeyStore("Verbena", config.TokenIssuer, jwt.SigningMethodHS512, apiKeystore)
+	apiIssuer, err := mjwt.NewIssuerWithKeyStore("Verbena", config.TokenIssuer, jwt.SigningMethodRS512, apiKeystore)
 	if err != nil {
 		logger.Logger.Fatal("Failed to load MJWT issuer private key", "err", err)
 	}
