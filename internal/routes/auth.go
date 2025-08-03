@@ -35,6 +35,7 @@ func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiI
 		err := dec.Decode(&createBody)
 		if err != nil {
 			http.Error(rw, "Failed to decode body", http.StatusBadRequest)
+			return
 		}
 
 		_, isDomain := dns.IsDomainName(createBody.Zone)
