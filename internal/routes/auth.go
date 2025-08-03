@@ -67,6 +67,7 @@ func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiI
 
 		botToken, err := auth.CreateRefreshTokenWithDuration(apiIssuer, 87600*time.Hour, createBody.Zone, tokenAti, tokenAti, jwt.ClaimStrings{})
 		if err != nil {
+			logger.Logger.Debug("Failed to create refresh token", "err", err)
 			http.Error(rw, "Failed to create refresh token", http.StatusInternalServerError)
 			return
 		}
