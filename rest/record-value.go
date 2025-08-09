@@ -3,11 +3,12 @@ package rest
 import (
 	"errors"
 	"fmt"
-	"github.com/1f349/verbena/internal/utils"
-	"github.com/1f349/verbena/internal/zone"
 	"net/netip"
 	"strconv"
 	"strings"
+
+	"github.com/1f349/verbena/internal/utils"
+	"github.com/1f349/verbena/internal/zone"
 )
 
 type RecordValue struct {

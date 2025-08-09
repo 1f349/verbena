@@ -5,6 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
@@ -12,10 +17,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/miekg/dns"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type authQueries interface {

@@ -3,6 +3,9 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
@@ -10,8 +13,6 @@ import (
 	"github.com/1f349/verbena/rest"
 	"github.com/go-chi/chi/v5"
 	"github.com/gobuffalo/nulls"
-	"net/http"
-	"strconv"
 )
 
 type recordQueries interface {

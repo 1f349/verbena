@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"strconv"
+
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
 	"github.com/1f349/verbena/rest"
 	"github.com/go-chi/chi/v5"
-	"net/http"
-	"strconv"
 )
 
 type zoneQueries interface {
@@ -24,7 +25,7 @@ func ZoneToRestZone(zone database.Zone, nameservers []string) rest.Zone {
 	return rest.Zone{
 		ID:      zone.ID,
 		Name:    zone.Name,
-		Serial:  zone.Serial,
+		Serial:  uint32(zone.Serial),
 		Admin:   zone.Admin,
 		Refresh: zone.Refresh,
 		Retry:   zone.Retry,

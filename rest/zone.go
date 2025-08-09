@@ -2,7 +2,6 @@ package rest
 
 import (
 	"encoding/json"
-	"github.com/1f349/verbena/internal/database"
 	"net/http"
 	"strconv"
 )
@@ -10,7 +9,7 @@ import (
 type Zone struct {
 	ID      int64  `json:"id"`
 	Name    string `json:"name"`
-	Serial  int64  `json:"serial"`
+	Serial  uint32 `json:"serial"`
 	Admin   string `json:"admin"`
 	Refresh int32  `json:"refresh"`
 	Retry   int32  `json:"retry"`
@@ -21,14 +20,14 @@ type Zone struct {
 	Nameservers []string `json:"nameservers"`
 }
 
-func (c *Client) GetZones() ([]database.Zone, error) {
+func (c *Client) GetZones() ([]Zone, error) {
 	resp, err := doRequest(c, http.MethodGet, "/zones", nil)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var zones []database.Zone
+	var zones []Zone
 	err = json.NewDecoder(resp.Body).Decode(&zones)
 	if err != nil {
 		return nil, err
@@ -36,17 +35,17 @@ func (c *Client) GetZones() ([]database.Zone, error) {
 	return zones, nil
 }
 
-func (c *Client) GetZone(zoneId int64) (database.Zone, error) {
+func (c *Client) GetZone(zoneId int64) (Zone, error) {
 	resp, err := doRequest(c, http.MethodGet, "/zones/"+strconv.FormatInt(zoneId, 10), nil)
 	if err != nil {
-		return database.Zone{}, err
+		return Zone{}, err
 	}
 	defer resp.Body.Close()
 
-	var zone database.Zone
+	var zone Zone
 	err = json.NewDecoder(resp.Body).Decode(&zone)
 	if err != nil {
-		return database.Zone{}, err
+		return Zone{}, err
 	}
 	return zone, nil
 }

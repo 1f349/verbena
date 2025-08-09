@@ -11,6 +11,7 @@ require (
 	github.com/gobuffalo/nulls v0.4.2
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-migrate/migrate/v4 v4.18.3
+	github.com/google/go-cmp v0.6.0
 	github.com/miekg/dns v1.1.67
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1

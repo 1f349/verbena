@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/nulls"
 	"net/http"
 	"strconv"
+
+	"github.com/gobuffalo/nulls"
 )
 
 type Record struct {

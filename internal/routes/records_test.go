@@ -3,6 +3,13 @@ package routes
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync/atomic"
+	"testing"
+	"time"
+
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
@@ -10,12 +17,6 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"sync/atomic"
-	"testing"
-	"time"
 )
 
 type recordTestQueries struct {

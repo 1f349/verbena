@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/miekg/dns"
 	"regexp"
+
+	"github.com/miekg/dns"
 )
 
 var validateDnsName = regexp.MustCompile("^[a-z0-9-.]+$")
