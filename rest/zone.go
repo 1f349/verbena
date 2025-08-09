@@ -2,8 +2,11 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/miekg/dns"
 )
 
 type Zone struct {
@@ -48,4 +51,26 @@ func (c *Client) GetZone(zoneId int64) (Zone, error) {
 		return Zone{}, err
 	}
 	return zone, nil
+}
+
+func (c *Client) LookupZone(zoneName string) (int64, error) {
+	_, validDomain := dns.IsDomainName(zoneName)
+	if !validDomain {
+		return 0, fmt.Errorf("invalid zone: %s", zoneName)
+	}
+
+	resp, err := doRequest(c, http.MethodGet, "/zones/lookup/"+zoneName, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	var zoneId struct {
+		ID int64 `json:"id"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&zoneId)
+	if err != nil {
+		return 0, err
+	}
+	return zoneId.ID, nil
 }

@@ -117,6 +117,19 @@ func (q *Queries) GetZone(ctx context.Context, id int64) (Zone, error) {
 	return i, err
 }
 
+const lookupZone = `-- name: LookupZone :one
+SELECT id
+FROM zones
+WHERE name = ?
+`
+
+func (q *Queries) LookupZone(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, lookupZone, name)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const updateZoneSerial = `-- name: UpdateZoneSerial :exec
 UPDATE zones
 SET serial =

@@ -14,11 +14,13 @@ import (
 	"github.com/1f349/verbena/logger"
 	"github.com/1f349/verbena/rest"
 	"github.com/go-chi/chi/v5"
+	"github.com/miekg/dns"
 )
 
 type zoneQueries interface {
 	GetOwnedZones(ctx context.Context, userID string) ([]database.GetOwnedZonesRow, error)
 	GetZone(ctx context.Context, id int64) (database.Zone, error)
+	LookupZone(ctx context.Context, name string) (int64, error)
 }
 
 func ZoneToRestZone(zone database.Zone, nameservers []string) rest.Zone {
@@ -82,6 +84,34 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, namese
 			return
 		}
 		json.NewEncoder(rw).Encode(ZoneToRestZone(zone, nameservers))
+	}))
+
+	r.Get("/zones/lookup/{zone_name:[a-z0-9-.]+}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		zoneName := chi.URLParam(req, "zone_name")
+
+		// Check if zone looks real
+		_, validDomain := dns.IsDomainName(zoneName)
+		if !validDomain {
+			http.Error(rw, "Invalid zone name", http.StatusBadRequest)
+			return
+		}
+
+		// Check ownership
+		if !b.Claims.Perms.Has("domain:owns=" + zoneName) {
+			http.NotFound(rw, req)
+			return
+		}
+
+		// Lookup and respond with zone ID
+		zoneId, err := db.LookupZone(req.Context(), zoneName)
+		if err != nil {
+			return
+		}
+		json.NewEncoder(rw).Encode(struct {
+			ID int64 `json:"id"`
+		}{
+			ID: zoneId,
+		})
 	}))
 }
 

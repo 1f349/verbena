@@ -3,16 +3,17 @@ package routes
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 type zoneTestQueries struct {
@@ -57,6 +58,14 @@ func (z *zoneTestQueries) GetZone(ctx context.Context, zoneId int64) (database.Z
 		Ttl:     13,
 		Active:  true,
 	}, nil
+}
+
+func (z *zoneTestQueries) LookupZone(ctx context.Context, name string) (int64, error) {
+	if name != "example.com" {
+		return 0, sql.ErrNoRows
+	}
+
+	return 3456, nil
 }
 
 func TestAddZoneRoutes(t *testing.T) {
@@ -130,5 +139,37 @@ func TestAddZoneRoutes(t *testing.T) {
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, "{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true,\"nameservers\":[\"ns1.example.com\",\"ns2.example.com\"]}\n", rec.Body.String())
+	})
+
+	t.Run("/zones/lookup/{name}", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/zones/lookup/example.com", nil)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodGet, "/zones/lookup/example.com", nil)
+		ps := auth.NewPermStorage()
+		ps.Set("domain:owns=example.org")
+		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodGet, "/zones/lookup/example.com", nil)
+		ps = auth.NewPermStorage()
+		ps.Set("domain:owns=example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "{\"id\":3456}\n", rec.Body.String())
 	})
 }

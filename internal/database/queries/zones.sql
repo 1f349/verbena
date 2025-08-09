@@ -20,3 +20,8 @@ SET serial =
         IF(LEFT(serial, 8) = DATE_FORMAT(CURDATE(), '%Y%m%d'), serial + 1,
            CAST(DATE_FORMAT(CURDATE(), '%Y%m%d') AS UNSIGNED) * 100 + 1)
 WHERE id = ?;
+
+-- name: LookupZone :one
+SELECT id
+FROM zones
+WHERE name = ?;
