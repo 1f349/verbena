@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Client struct {
@@ -34,6 +35,8 @@ func doRequest(c *Client, method string, p string, r io.Reader) (*http.Response,
 		return nil, err
 	}
 	if resp.StatusCode == http.StatusUnauthorized {
+		_ = resp.Body.Close()
+
 		err2 := refreshToken(c)
 		if err2 != nil {
 			return nil, fmt.Errorf("failed to refresh token: %v: %w", err2, err)
@@ -43,6 +46,16 @@ func doRequest(c *Client, method string, p string, r io.Reader) (*http.Response,
 		if err != nil {
 			return nil, err
 		}
+	}
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+
+		var errMsg strings.Builder
+		_, err = io.Copy(&errMsg, resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read bad status code error message")
+		}
+		return nil, fmt.Errorf("unexpected status code %d: %s", resp.StatusCode, errMsg.String())
 	}
 
 	return resp, nil
