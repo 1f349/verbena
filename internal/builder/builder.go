@@ -102,6 +102,10 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 			ty = zone.CNAME
 		case "TXT":
 			ty = zone.TXT
+		case "SRV":
+			ty = zone.SRV
+		case "CAA":
+			ty = zone.CAA
 		default:
 			return fmt.Errorf("unknown type: %s", i.Type)
 		}
