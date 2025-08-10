@@ -129,6 +129,8 @@ func WriteZone(w io.Writer, origin string, defaultTtl uint32, soa SoaRecord, rec
 				}
 				val += ")"
 			}
+		default:
+			continue
 		}
 
 		_, err = fmt.Fprintf(w, "%s\tIN\t%s\t%s\n", zoneRecordName(record.Name), record.Type.String(), val)
