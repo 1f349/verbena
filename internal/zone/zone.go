@@ -1,12 +1,14 @@
 package zone
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/netip"
 	"strconv"
 	"strings"
 
+	"github.com/1f349/verbena/internal/utils"
 	"github.com/miekg/dns"
 )
 
@@ -129,6 +131,44 @@ func WriteZone(w io.Writer, origin string, defaultTtl uint32, soa SoaRecord, rec
 				}
 				val += ")"
 			}
+		case SRV:
+			srvFields := strings.Fields(record.Value)
+			if len(srvFields) != 4 {
+				return fmt.Errorf("invalid SRV record: %s", record.Value)
+			}
+			// Priority
+			priority, err := strconv.ParseUint(srvFields[0], 10, 32)
+			if err != nil {
+				return errors.New("invalid SRV record")
+			}
+			// Weight
+			weight, err := strconv.ParseUint(srvFields[1], 10, 32)
+			if err != nil {
+				return errors.New("invalid SRV record")
+			}
+			// Port
+			port, err := strconv.ParseUint(srvFields[2], 10, 16)
+			if err != nil {
+				return errors.New("invalid SRV record")
+			}
+			// Target
+			if !utils.ValidateDomainName(srvFields[3]) {
+				return errors.New("invalid SRV record")
+			}
+			val = fmt.Sprintf("%d\t%d\t%d\t%s", priority, weight, port, dns.Fqdn(srvFields[3]))
+		case CAA:
+			caaFields := strings.Fields(record.Value)
+			if len(caaFields) != 3 {
+				return fmt.Errorf("invalid CAA record: %s", record.Value)
+			}
+			flags, err := strconv.ParseUint(caaFields[0], 10, 8)
+			if err != nil {
+				return errors.New("invalid CAA record")
+			}
+			if caaFields[1] != "issue" && caaFields[1] != "issuewild" {
+				return errors.New("invalid CAA record")
+			}
+			val = fmt.Sprintf("%d\t%s\t%s", flags, caaFields[1], dns.Fqdn(caaFields[2]))
 		default:
 			continue
 		}
