@@ -18,7 +18,6 @@ const (
 
 func (t RecordType) IsValid() bool {
 	return t > invalidRecordType && t <= CAA
-	//return t > invalidRecordType && t <= CAA
 }
 
 var recordTypeToString = []string{
