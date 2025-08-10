@@ -2,11 +2,12 @@ package committer
 
 import (
 	"context"
+	"os/exec"
+	"time"
+
 	"github.com/1f349/verbena/internal/builder"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
-	"os/exec"
-	"time"
 )
 
 type Committer struct {

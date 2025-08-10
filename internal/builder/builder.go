@@ -3,16 +3,17 @@ package builder
 import (
 	"context"
 	"fmt"
-	"github.com/1f349/verbena/internal/database"
-	"github.com/1f349/verbena/internal/zone"
-	"github.com/1f349/verbena/logger"
-	"github.com/charmbracelet/log"
-	"github.com/gobuffalo/nulls"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/1f349/verbena/internal/database"
+	"github.com/1f349/verbena/internal/zone"
+	"github.com/1f349/verbena/logger"
+	"github.com/charmbracelet/log"
+	"github.com/gobuffalo/nulls"
 )
 
 type committerQueries interface {

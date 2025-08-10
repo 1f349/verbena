@@ -4,6 +4,14 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"io/fs"
+	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
+
 	"github.com/1f349/mjwt"
 	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/builder"
@@ -18,13 +26,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/golang-jwt/jwt/v4"
 	"gopkg.in/yaml.v3"
-	"io/fs"
-	"net/http"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
 )
 
 var (

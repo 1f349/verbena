@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/source/iofs"

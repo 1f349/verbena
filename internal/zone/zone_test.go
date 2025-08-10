@@ -4,12 +4,13 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/hex"
-	"github.com/gobuffalo/nulls"
 	"os"
 	"os/exec"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/gobuffalo/nulls"
 )
 
 const exampleDomainKey = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +

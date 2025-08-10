@@ -2,11 +2,12 @@ package zone
 
 import (
 	"fmt"
-	"github.com/miekg/dns"
 	"io"
 	"net/netip"
 	"strconv"
 	"strings"
+
+	"github.com/miekg/dns"
 )
 
 func zoneRecordName(name string) string {
