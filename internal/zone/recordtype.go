@@ -17,7 +17,7 @@ const (
 )
 
 func (t RecordType) IsValid() bool {
-	return t > invalidRecordType && t <= TXT
+	return t > invalidRecordType && t <= CAA
 	//return t > invalidRecordType && t <= CAA
 }
 
@@ -28,8 +28,8 @@ var recordTypeToString = []string{
 	"AAAA",
 	"CNAME",
 	"TXT",
-	//"SRV",
-	//"CAA",
+	"SRV",
+	"CAA",
 }
 
 func (t RecordType) String() string {
@@ -46,8 +46,8 @@ var stringToRecordType = map[string]RecordType{
 	"AAAA":  AAAA,
 	"CNAME": CNAME,
 	"TXT":   TXT,
-	//"SRV":   SRV,
-	//"CAA":   CAA,
+	"SRV":   SRV,
+	"CAA":   CAA,
 }
 
 func RecordTypeFromString(s string) RecordType {
