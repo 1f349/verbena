@@ -49,7 +49,7 @@ func appendRecord(slice []rest.Record, record database.Record) []rest.Record {
 	return append(slice, record2)
 }
 
-func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
+func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, nameservers []string) {
 	r.Route("/zones/{zone_id:[0-9]+}/records", func(r chi.Router) {
 		// List all records
 		r.Get("/", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
@@ -66,7 +66,20 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore) {
 				return
 			}
 
-			records := make([]rest.Record, 0, len(rows))
+			records := make([]rest.Record, 0, len(rows)+len(nameservers))
+			for _, ns := range nameservers {
+				records = append(records, rest.Record{
+					ID:     0,
+					Name:   "@",
+					ZoneID: zoneId,
+					Ttl:    nulls.Int32{},
+					Type:   "NS",
+					Value: rest.RecordValue{
+						Target: ns,
+					},
+					Active: true,
+				})
+			}
 			for _, record := range rows {
 				if !b.Claims.Perms.Has("domain:owns=" + record.Name) {
 					continue

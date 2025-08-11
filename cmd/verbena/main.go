@@ -150,7 +150,7 @@ func main() {
 
 	// Add routes
 	routes.AddZoneRoutes(r, db, apiKeystore, config.Nameservers)
-	routes.AddRecordRoutes(r, db, apiKeystore)
+	routes.AddRecordRoutes(r, db, apiKeystore, config.Nameservers)
 	routes.AddAuthRoutes(r, db, apiKeystore, apiIssuer)
 
 	zoneBuilder, err := builder.New(db, time.Duration(config.GeneratorTick), zonesPath, config.Nameservers)

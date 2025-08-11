@@ -133,7 +133,7 @@ func TestAddRecordRoutes(t *testing.T) {
 	q := &recordTestQueries{
 		records: make(map[int64]database.Record),
 	}
-	AddRecordRoutes(r, q, issuer.KeyStore())
+	AddRecordRoutes(r, q, issuer.KeyStore(), nil)
 	_, err = q.InsertRecordFromApi(t.Context(), database.InsertRecordFromApiParams{
 		Name:      "",
 		ZoneID:    3456,
