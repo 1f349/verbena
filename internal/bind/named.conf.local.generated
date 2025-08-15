@@ -1,0 +1,12 @@
+zone "example.com" IN {
+	type master;
+	file "/etc/bind/zones/example.com.zone";
+};
+zone "example.org" IN {
+	type master;
+	file "/etc/bind/zones/example.org.zone";
+};
+zone "example.net" IN {
+	type master;
+	file "/etc/bind/zones/example.net.zone";
+};
