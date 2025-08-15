@@ -7,6 +7,7 @@ type Conf struct {
 	DB            string             `yaml:"db"`
 	Nameservers   []string           `yaml:"nameservers"`
 	ZonePath      string             `yaml:"zonePath"`
+	BindGenConf   string             `yaml:"bindGenConf"`
 	GeneratorTick utils.DurationText `yaml:"generatorTick"`
 	Primary       bool               `yaml:"primary"`
 	CommitterTick utils.DurationText `yaml:"committerTick"`

@@ -6,9 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
+	"github.com/1f349/verbena/internal/bind"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/internal/zone"
 	"github.com/1f349/verbena/logger"
@@ -25,11 +27,12 @@ type Builder struct {
 	db          committerQueries
 	genTick     time.Duration
 	dir         string
+	bindGenConf string
 	nameservers []string
 	genLock     sync.Mutex
 }
 
-func New(db committerQueries, genTick time.Duration, dir string, nameservers []string) (*Builder, error) {
+func New(db committerQueries, genTick time.Duration, dir string, bindGenConf string, nameservers []string) (*Builder, error) {
 	if len(nameservers) < 3 {
 		return nil, fmt.Errorf("at least 3 nameservers are required")
 	}
@@ -37,6 +40,7 @@ func New(db committerQueries, genTick time.Duration, dir string, nameservers []s
 		db:          db,
 		genTick:     genTick,
 		dir:         dir,
+		bindGenConf: bindGenConf,
 		nameservers: nameservers,
 	}, nil
 }
@@ -46,6 +50,8 @@ func (b *Builder) Start() {
 }
 
 func (b *Builder) internalTicker() {
+	var loadedZones []string
+
 	t := time.NewTicker(b.genTick)
 	for {
 		select {
@@ -57,10 +63,25 @@ func (b *Builder) internalTicker() {
 				logger.Logger.Error("Failed to get list of active zones")
 				return
 			}
+
+			var newLoadedZones []string
 			for _, i := range zones {
 				err = b.Generate(context.Background(), i)
 				if err != nil {
 					logger.Logger.Error("Failed to generate a zone", "zone id", i.ID, "zone name", i.Name, "err", err)
+				}
+				newLoadedZones = append(newLoadedZones, i.Name)
+			}
+
+			slices.Sort(newLoadedZones)
+
+			// If the currently loaded zones and new loaded zones
+			if !slices.Equal(newLoadedZones, loadedZones) {
+				err = b.generateLocalGeneratedConfig(newLoadedZones)
+				if err != nil {
+					logger.Logger.Error("Failed to generate locally generated config")
+				} else {
+					loadedZones = newLoadedZones
 				}
 			}
 		}
@@ -158,4 +179,21 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 	}
 
 	return os.Rename(zoneFileTemp, zoneFileName)
+}
+
+func (b *Builder) generateLocalGeneratedConfig(zones []string) error {
+	bindLocalTempPath := b.bindGenConf + ".temp"
+	bindLocalTemp, err := os.Create(bindLocalTempPath)
+	if err != nil {
+		return err
+	}
+	defer bindLocalTemp.Close()
+	defer os.Remove(bindLocalTempPath)
+
+	err = bind.WriteBindConfig(bindLocalTemp, b.dir, zones)
+	if err != nil {
+		return err
+	}
+
+	return os.Rename(bindLocalTempPath, b.bindGenConf)
 }
