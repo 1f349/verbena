@@ -77,7 +77,7 @@ func (b *Builder) internalTicker() {
 
 			// If the currently loaded zones and new loaded zones
 			if !slices.Equal(newLoadedZones, loadedZones) {
-				err = b.generateLocalGeneratedConfig(newLoadedZones)
+				err = b.generateLocalGeneratedConfig(ctx, newLoadedZones)
 				if err != nil {
 					logger.Logger.Error("Failed to generate locally generated config")
 				} else {
@@ -183,10 +183,10 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		return err
 	}
 
-	return b.bindReload(ctx, zoneInfo)
+	return b.bindReloadZone(ctx, zoneInfo)
 }
 
-func (b *Builder) generateLocalGeneratedConfig(zones []string) error {
+func (b *Builder) generateLocalGeneratedConfig(ctx context.Context, zones []string) error {
 	bindLocalTempPath := b.bindGenConf + ".temp"
 	bindLocalTemp, err := os.Create(bindLocalTempPath)
 	if err != nil {
@@ -200,9 +200,18 @@ func (b *Builder) generateLocalGeneratedConfig(zones []string) error {
 		return err
 	}
 
-	return os.Rename(bindLocalTempPath, b.bindGenConf)
+	err = os.Rename(bindLocalTempPath, b.bindGenConf)
+	if err != nil {
+		return err
+	}
+
+	return b.bindReload(ctx)
 }
 
-func (b *Builder) bindReload(ctx context.Context, zone database.Zone) error {
+func (b *Builder) bindReload(ctx context.Context) error {
+	return exec.CommandContext(ctx, "/usr/sbin/rndc", "reload").Run()
+}
+
+func (b *Builder) bindReloadZone(ctx context.Context, zone database.Zone) error {
 	return exec.CommandContext(ctx, "/usr/sbin/rndc", "reload", zone.Name).Run()
 }
