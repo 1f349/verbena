@@ -75,6 +75,8 @@ func main() {
 		logger.Logger.Fatal("Invalid config file", "err", err)
 	}
 
+	config.Cmd.LoadDefaults()
+
 	wd := filepath.Dir(*configPath)
 
 	zonesPath := filepath.Join(wd, config.ZonePath)

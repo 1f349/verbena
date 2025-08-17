@@ -12,4 +12,23 @@ type Conf struct {
 	Primary       bool               `yaml:"primary"`
 	CommitterTick utils.DurationText `yaml:"committerTick"`
 	TokenIssuer   string             `yaml:"tokenIssuer"`
+	Cmd           CmdConf            `yaml:"cmd"`
+}
+
+type CmdConf struct {
+	Rndc      string `yaml:"rndc"`
+	CheckConf string `yaml:"checkconf"`
+	CheckZone string `yaml:"checkzone"`
+}
+
+func (c *CmdConf) LoadDefaults() {
+	if c.Rndc == "" {
+		c.Rndc = "/usr/sbin/rndc"
+	}
+	if c.CheckConf == "" {
+		c.CheckConf = "/usr/bin/named-checkconf"
+	}
+	if c.CheckZone == "" {
+		c.CheckZone = "/usr/bin/named-checkzone"
+	}
 }
