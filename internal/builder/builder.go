@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/bind"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/internal/zone"
@@ -30,9 +31,10 @@ type Builder struct {
 	bindGenConf string
 	nameservers []string
 	genLock     sync.Mutex
+	cmd         conf.CmdConf
 }
 
-func New(db committerQueries, genTick time.Duration, dir string, bindGenConf string, nameservers []string) (*Builder, error) {
+func New(db committerQueries, genTick time.Duration, dir string, bindGenConf string, nameservers []string, cmd conf.CmdConf) (*Builder, error) {
 	if len(nameservers) < 3 {
 		return nil, fmt.Errorf("at least 3 nameservers are required")
 	}
@@ -42,6 +44,7 @@ func New(db committerQueries, genTick time.Duration, dir string, bindGenConf str
 		dir:         dir,
 		bindGenConf: bindGenConf,
 		nameservers: nameservers,
+		cmd:         cmd,
 	}, nil
 }
 
@@ -169,7 +172,7 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		return err
 	}
 
-	cmd := exec.CommandContext(ctx, "/usr/bin/named-checkzone", zoneInfo.Name, zoneFileTemp)
+	cmd := exec.CommandContext(ctx, b.cmd.CheckZone, zoneInfo.Name, zoneFileTemp)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if logger.Logger.GetLevel() >= log.DebugLevel {
@@ -209,9 +212,9 @@ func (b *Builder) generateLocalGeneratedConfig(ctx context.Context, zones []stri
 }
 
 func (b *Builder) bindReload(ctx context.Context) error {
-	return exec.CommandContext(ctx, "/usr/sbin/rndc", "reload").Run()
+	return exec.CommandContext(ctx, b.cmd.Rndc, "reload").Run()
 }
 
 func (b *Builder) bindReloadZone(ctx context.Context, zone database.Zone) error {
-	return exec.CommandContext(ctx, "/usr/sbin/rndc", "reload", zone.Name).Run()
+	return exec.CommandContext(ctx, b.cmd.Rndc, "reload", zone.Name).Run()
 }

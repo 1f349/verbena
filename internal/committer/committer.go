@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/builder"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
@@ -15,14 +16,16 @@ type Committer struct {
 	tick    time.Duration
 	primary bool
 	b       *builder.Builder
+	cmd     conf.CmdConf
 }
 
-func New(db *database.Queries, tick time.Duration, primary bool, b *builder.Builder) *Committer {
+func New(db *database.Queries, tick time.Duration, primary bool, b *builder.Builder, cmd conf.CmdConf) *Committer {
 	return &Committer{
 		db:      db,
 		tick:    tick,
 		primary: primary,
 		b:       b,
+		cmd:     cmd,
 	}
 }
 
@@ -93,5 +96,5 @@ func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
 }
 
 func (c *Committer) bindNotify(ctx context.Context, zone database.Zone) error {
-	return exec.CommandContext(ctx, "/usr/sbin/rndc", "notify", zone.Name).Run()
+	return exec.CommandContext(ctx, c.cmd.Rndc, "notify", zone.Name).Run()
 }

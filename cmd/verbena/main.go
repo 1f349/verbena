@@ -155,13 +155,13 @@ func main() {
 	routes.AddRecordRoutes(r, db, apiKeystore, config.Nameservers)
 	routes.AddAuthRoutes(r, db, apiKeystore, apiIssuer)
 
-	zoneBuilder, err := builder.New(db, time.Duration(config.GeneratorTick), zonesPath, config.BindGenConf, config.Nameservers)
+	zoneBuilder, err := builder.New(db, time.Duration(config.GeneratorTick), zonesPath, config.BindGenConf, config.Nameservers, config.Cmd)
 	if err != nil {
 		logger.Logger.Fatal("Failed to initialise zone builder", "err", err)
 	}
 	zoneBuilder.Start()
 
-	commit := committer.New(db, time.Duration(config.CommitterTick), config.Primary, zoneBuilder)
+	commit := committer.New(db, time.Duration(config.CommitterTick), config.Primary, zoneBuilder, config.Cmd)
 	commit.Start()
 
 	serverApi := &http.Server{
