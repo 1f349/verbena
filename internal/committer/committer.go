@@ -57,6 +57,8 @@ func (c *Committer) internalTick() {
 }
 
 func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
+	shouldNotify := false
+
 	err := c.db.UseTx(ctx, func(tx *database.Queries) error {
 		rowsUpdated, err := tx.CommitZoneRecords(ctx, zone.ID)
 		if err != nil {
@@ -67,6 +69,7 @@ func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
 			return err
 		}
 		if rowsUpdated+rowsDeleted > 0 {
+			shouldNotify = true
 			err = tx.UpdateZoneSerial(ctx, zone.ID)
 			if err != nil {
 				return err
@@ -83,7 +86,10 @@ func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
 		return err
 	}
 
-	return c.bindNotify(ctx, zone)
+	if shouldNotify {
+		return c.bindNotify(ctx, zone)
+	}
+	return nil
 }
 
 func (c *Committer) bindNotify(ctx context.Context, zone database.Zone) error {
