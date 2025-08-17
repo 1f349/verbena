@@ -83,16 +83,7 @@ func (c *Committer) Commit(ctx context.Context, zone database.Zone) error {
 		return err
 	}
 
-	err = c.bindReload(ctx, zone)
-	if err != nil {
-		return err
-	}
-
 	return c.bindNotify(ctx, zone)
-}
-
-func (c *Committer) bindReload(ctx context.Context, zone database.Zone) error {
-	return exec.CommandContext(ctx, "/usr/sbin/rndc", "reload", zone.Name).Run()
 }
 
 func (c *Committer) bindNotify(ctx context.Context, zone database.Zone) error {

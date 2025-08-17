@@ -178,7 +178,12 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		return err
 	}
 
-	return os.Rename(zoneFileTemp, zoneFileName)
+	err = os.Rename(zoneFileTemp, zoneFileName)
+	if err != nil {
+		return err
+	}
+
+	return b.bindReload(ctx, zoneInfo)
 }
 
 func (b *Builder) generateLocalGeneratedConfig(zones []string) error {
@@ -196,4 +201,8 @@ func (b *Builder) generateLocalGeneratedConfig(zones []string) error {
 	}
 
 	return os.Rename(bindLocalTempPath, b.bindGenConf)
+}
+
+func (b *Builder) bindReload(ctx context.Context, zone database.Zone) error {
+	return exec.CommandContext(ctx, "/usr/sbin/rndc", "reload", zone.Name).Run()
 }
