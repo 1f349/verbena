@@ -79,7 +79,7 @@ func main() {
 
 	wd := filepath.Dir(*configPath)
 
-	zonesPath := filepath.Join(wd, config.ZonePath)
+	zonesPath := joinPath(wd, config.ZonePath)
 	err = os.Mkdir(zonesPath, 0700)
 	if err != nil && !errors.Is(err, fs.ErrExist) {
 		logger.Logger.Fatal("Failed to create zone directory", "err", err)
@@ -97,7 +97,7 @@ func main() {
 		}
 	}()
 
-	keysPath := filepath.Join(wd, "keys")
+	keysPath := joinPath(wd, "keys")
 	err = os.Mkdir(keysPath, 0700)
 	if err != nil && !errors.Is(err, fs.ErrExist) {
 		logger.Logger.Fatal("Failed to create keys directory", "err", err)
@@ -192,4 +192,11 @@ func main() {
 	})
 
 	serverApi.Shutdown(context.Background())
+}
+
+func joinPath(base, option string) string {
+	if filepath.IsAbs(option) {
+		return filepath.Clean(option)
+	}
+	return filepath.Join(base, option)
 }
