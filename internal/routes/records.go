@@ -8,6 +8,7 @@ import (
 
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
+	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
 	"github.com/1f349/verbena/rest"
@@ -49,13 +50,20 @@ func appendRecord(slice []rest.Record, record database.Record) []rest.Record {
 	return append(slice, record2)
 }
 
-func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, nameservers []string) {
+func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, nameservers conf.NameserverConf) {
 	r.Route("/zones/{zone_id:[0-9]+}/records", func(r chi.Router) {
 		// List all records
 		r.Get("/", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 			zoneId, err := getZoneId(req)
 			if err != nil {
 				http.Error(rw, "Invalid zone ID", http.StatusBadRequest)
+				return
+			}
+
+			zone, err := db.GetZone(req.Context(), zoneId)
+			if err != nil {
+				logger.Logger.Error("Failed to get zone", "err", err)
+				http.Error(rw, "Database error occurred", http.StatusInternalServerError)
 				return
 			}
 
@@ -66,8 +74,10 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, na
 				return
 			}
 
-			records := make([]rest.Record, 0, len(rows)+len(nameservers))
-			for _, ns := range nameservers {
+			ns := nameservers.GetNameserversForZone(zone)
+
+			records := make([]rest.Record, 0, len(rows)+len(ns))
+			for _, ns := range ns {
 				records = append(records, rest.Record{
 					ID:     0,
 					Name:   "@",

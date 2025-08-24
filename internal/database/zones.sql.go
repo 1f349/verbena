@@ -10,7 +10,7 @@ import (
 )
 
 const getActiveZones = `-- name: GetActiveZones :many
-SELECT id, name, serial, admin, refresh, retry, expire, ttl, active
+SELECT id, name, serial, admin, refresh, retry, expire, ttl, active, nameserver
 FROM zones
 WHERE active = 1
 `
@@ -34,6 +34,7 @@ func (q *Queries) GetActiveZones(ctx context.Context) ([]Zone, error) {
 			&i.Expire,
 			&i.Ttl,
 			&i.Active,
+			&i.Nameserver,
 		); err != nil {
 			return nil, err
 		}
@@ -49,7 +50,7 @@ func (q *Queries) GetActiveZones(ctx context.Context) ([]Zone, error) {
 }
 
 const getOwnedZones = `-- name: GetOwnedZones :many
-SELECT zones.id, zones.name, zones.serial, zones.admin, zones.refresh, zones.retry, zones.expire, zones.ttl, zones.active, owners.user_id
+SELECT zones.id, zones.name, zones.serial, zones.admin, zones.refresh, zones.retry, zones.expire, zones.ttl, zones.active, zones.nameserver, owners.user_id
 FROM zones
          INNER JOIN owners ON zones.id = owners.zone_id
 WHERE owners.user_id = ?
@@ -79,6 +80,7 @@ func (q *Queries) GetOwnedZones(ctx context.Context, userID string) ([]GetOwnedZ
 			&i.Zone.Expire,
 			&i.Zone.Ttl,
 			&i.Zone.Active,
+			&i.Zone.Nameserver,
 			&i.UserID,
 		); err != nil {
 			return nil, err
@@ -95,7 +97,7 @@ func (q *Queries) GetOwnedZones(ctx context.Context, userID string) ([]GetOwnedZ
 }
 
 const getZone = `-- name: GetZone :one
-SELECT id, name, serial, admin, refresh, retry, expire, ttl, active
+SELECT id, name, serial, admin, refresh, retry, expire, ttl, active, nameserver
 FROM zones
 WHERE id = ?
 `
@@ -113,6 +115,7 @@ func (q *Queries) GetZone(ctx context.Context, id int64) (Zone, error) {
 		&i.Expire,
 		&i.Ttl,
 		&i.Active,
+		&i.Nameserver,
 	)
 	return i, err
 }

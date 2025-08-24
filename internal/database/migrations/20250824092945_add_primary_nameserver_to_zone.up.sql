@@ -1,0 +1,2 @@
+ALTER TABLE zones
+    ADD COLUMN nameserver TEXT NOT NULL DEFAULT '';

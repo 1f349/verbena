@@ -10,6 +10,7 @@ import (
 
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
+	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/logger"
 	"github.com/1f349/verbena/rest"
@@ -39,7 +40,7 @@ func ZoneToRestZone(zone database.Zone, nameservers []string) rest.Zone {
 	}
 }
 
-func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, nameservers []string) {
+func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, nameservers conf.NameserverConf) {
 	// List all zones
 	r.Get("/zones", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 		zones, err := db.GetOwnedZones(req.Context(), b.Subject)
@@ -54,7 +55,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, namese
 			if !b.Claims.Perms.Has("domain:owns=" + z.Zone.Name) {
 				continue
 			}
-			outZones = append(outZones, ZoneToRestZone(z.Zone, nameservers))
+			outZones = append(outZones, ZoneToRestZone(z.Zone, nameservers.GetNameserversForZone(z.Zone)))
 		}
 
 		json.NewEncoder(rw).Encode(outZones)
@@ -83,7 +84,7 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, namese
 			http.NotFound(rw, req)
 			return
 		}
-		json.NewEncoder(rw).Encode(ZoneToRestZone(zone, nameservers))
+		json.NewEncoder(rw).Encode(ZoneToRestZone(zone, nameservers.GetNameserversForZone(zone)))
 	}))
 
 	r.Get("/zones/lookup/{zone_name:[a-z0-9-.]+}", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
