@@ -10,6 +10,7 @@ import (
 
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
+	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v4"
@@ -74,7 +75,7 @@ func TestAddZoneRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	AddZoneRoutes(r, &zoneTestQueries{}, issuer.KeyStore(), []string{"ns1.example.com", "ns2.example.com"})
+	AddZoneRoutes(r, &zoneTestQueries{}, issuer.KeyStore(), conf.MustNameserverConf([][]string{{"ns1.example.com", "ns2.example.com"}}))
 
 	t.Run("/zones", func(t *testing.T) {
 		rec := httptest.NewRecorder()

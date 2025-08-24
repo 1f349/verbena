@@ -10,7 +10,7 @@ import (
 )
 
 const getOwnerByUserIdAndZone = `-- name: GetOwnerByUserIdAndZone :one
-SELECT owners.id, owners.zone_id, owners.user_id, zones.id, zones.name, zones.serial, zones.admin, zones.refresh, zones.retry, zones.expire, zones.ttl, zones.active
+SELECT owners.id, owners.zone_id, owners.user_id, zones.id, zones.name, zones.serial, zones.admin, zones.refresh, zones.retry, zones.expire, zones.ttl, zones.active, zones.nameserver
 FROM owners
          INNER JOIN zones ON owners.zone_id = zones.id
 WHERE user_id = ?
@@ -43,6 +43,7 @@ func (q *Queries) GetOwnerByUserIdAndZone(ctx context.Context, arg GetOwnerByUse
 		&i.Zone.Expire,
 		&i.Zone.Ttl,
 		&i.Zone.Active,
+		&i.Zone.Nameserver,
 	)
 	return i, err
 }

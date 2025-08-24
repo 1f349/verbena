@@ -34,16 +34,12 @@ type Builder struct {
 	cmd         conf.CmdConf
 }
 
-func New(db committerQueries, genTick time.Duration, dir string, bindGenConf string, nameservers []string, cmd conf.CmdConf) (*Builder, error) {
-	if len(nameservers) < 3 {
-		return nil, fmt.Errorf("at least 3 nameservers are required")
-	}
+func New(db committerQueries, genTick time.Duration, dir string, bindGenConf string, nameservers conf.NameserverConf, cmd conf.CmdConf) (*Builder, error) {
 	return &Builder{
 		db:          db,
 		genTick:     genTick,
 		dir:         dir,
 		bindGenConf: bindGenConf,
-		nameservers: nameservers,
 		cmd:         cmd,
 	}, nil
 }

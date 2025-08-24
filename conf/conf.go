@@ -1,11 +1,18 @@
 package conf
 
-import "github.com/1f349/verbena/internal/utils"
+import (
+	"encoding/json"
+	"fmt"
+	"slices"
+
+	"github.com/1f349/verbena/internal/database"
+	"github.com/1f349/verbena/internal/utils"
+)
 
 type Conf struct {
 	Listen        string             `yaml:"listen"`
 	DB            string             `yaml:"db"`
-	Nameservers   []string           `yaml:"nameservers"`
+	Nameservers   NameserverConf     `yaml:"nameservers"`
 	ZonePath      string             `yaml:"zonePath"`
 	BindGenConf   string             `yaml:"bindGenConf"`
 	GeneratorTick utils.DurationText `yaml:"generatorTick"`
@@ -31,4 +38,72 @@ func (c *CmdConf) LoadDefaults() {
 	if c.CheckZone == "" {
 		c.CheckZone = "/usr/bin/named-checkzone"
 	}
+}
+
+type NameserverConf struct {
+	nameserverMap      map[string][]string
+	defaultNameservers []string
+}
+
+func NewNameserverConf(slice [][]string) (NameserverConf, error) {
+	n := NameserverConf{
+		nameserverMap: make(map[string][]string),
+	}
+	if len(slice) < 1 {
+		return NameserverConf{}, fmt.Errorf("at least one nameserver slice must be specified")
+	}
+	for _, i := range slice {
+		if len(i) < 2 {
+			return NameserverConf{}, fmt.Errorf("a nameserver slice requires at least 2 nameservers")
+		}
+		n.nameserverMap[i[0]] = i
+	}
+	// The length of the default nameserver slice is checked in the above loop
+	n.defaultNameservers = slice[0]
+	return n, nil
+}
+
+func MustNameserverConf(slice [][]string) NameserverConf {
+	n, err := NewNameserverConf(slice)
+	if err != nil {
+		panic(err)
+	}
+	return n
+}
+
+var _ json.Marshaler = (*NameserverConf)(nil)
+var _ json.Unmarshaler = (*NameserverConf)(nil)
+
+func (n NameserverConf) MarshalJSON() ([]byte, error) {
+	var slice [][]string
+	slice = append(slice, n.defaultNameservers)
+	for _, i := range n.nameserverMap {
+		if slices.Equal(i, n.defaultNameservers) {
+			continue
+		}
+		slice = append(slice, i)
+	}
+	return json.Marshal(slice)
+}
+
+func (n *NameserverConf) UnmarshalJSON(bytes []byte) error {
+	var slice [][]string
+	err := json.Unmarshal(bytes, &slice)
+	if err != nil {
+		return err
+	}
+	n2, err := NewNameserverConf(slice)
+	if err != nil {
+		return err
+	}
+	*n = n2
+	return nil
+}
+
+func (n *NameserverConf) GetNameserversForZone(zoneInfo database.Zone) []string {
+	slice := n.nameserverMap[zoneInfo.Nameserver]
+	if slice != nil {
+		return slice
+	}
+	return n.defaultNameservers
 }

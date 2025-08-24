@@ -12,6 +12,7 @@ import (
 
 	"github.com/1f349/mjwt"
 	"github.com/1f349/mjwt/auth"
+	"github.com/1f349/verbena/conf"
 	"github.com/1f349/verbena/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/gobuffalo/nulls"
@@ -133,7 +134,7 @@ func TestAddRecordRoutes(t *testing.T) {
 	q := &recordTestQueries{
 		records: make(map[int64]database.Record),
 	}
-	AddRecordRoutes(r, q, issuer.KeyStore(), nil)
+	AddRecordRoutes(r, q, issuer.KeyStore(), conf.NameserverConf{})
 	_, err = q.InsertRecordFromApi(t.Context(), database.InsertRecordFromApiParams{
 		Name:      "",
 		ZoneID:    3456,
