@@ -112,25 +112,8 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 	}
 
 	for _, i := range records {
-		var ty zone.RecordType
-		switch i.Type {
-		case "NS":
-			ty = zone.NS
-		case "MX":
-			ty = zone.MX
-		case "A":
-			ty = zone.A
-		case "AAAA":
-			ty = zone.AAAA
-		case "CNAME":
-			ty = zone.CNAME
-		case "TXT":
-			ty = zone.TXT
-		case "SRV":
-			ty = zone.SRV
-		case "CAA":
-			ty = zone.CAA
-		default:
+		ty := zone.RecordTypeFromString(i.Type)
+		if !ty.IsValid() {
 			return fmt.Errorf("unknown type: %s", i.Type)
 		}
 		zoneRecords = append(zoneRecords, zone.Record{
