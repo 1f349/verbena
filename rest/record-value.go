@@ -43,6 +43,8 @@ func (v RecordValue) IsValidForType(recordType string) bool {
 		return v.Priority > 0 && v.Weight >= 0 && v.Port > 0 && utils.ValidateDomainName(v.Target)
 	case zone.CAA:
 		return (v.Tag == "issue" || v.Tag == "issuewild") && !strings.ContainsAny(v.Value, "\t")
+	case zone.PTR:
+		return utils.ValidateDomainName(v.Target)
 	default:
 		return false
 	}
@@ -73,6 +75,8 @@ func (v RecordValue) ToValueString(recordType string) string {
 		return fmt.Sprintf("%d\t%d\t%d\t%s", v.Priority, v.Weight, v.Port, v.Target)
 	case zone.CAA:
 		return fmt.Sprintf("%d\t%s\t%s", v.Flags, v.Tag, v.Value)
+	case zone.PTR:
+		return v.Target
 	default:
 		return ""
 	}
@@ -168,6 +172,11 @@ func ParseRecordValue(recordType string, value string) (RecordValue, error) {
 			Tag:   fields[1],
 			Value: fields[2],
 		}, nil
+	case zone.PTR:
+		if !utils.ValidateDomainName(value) {
+			return RecordValue{}, errors.New("invalid PTR record")
+		}
+		return RecordValue{Target: value}, nil
 	default:
 		return RecordValue{}, errors.New("invalid record type")
 	}
