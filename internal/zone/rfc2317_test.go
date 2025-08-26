@@ -8,6 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRfc2317PrefixCollector_AddPrefix(t *testing.T) {
+	c := NewRfc2317PrefixCollector()
+	c.AddPrefix(netip.MustParsePrefix("240.160.0.0/20"))
+	c.AddPrefix(netip.MustParsePrefix("240.160.192.0/20"))
+	c.AddPrefix(netip.MustParsePrefix("3fff:400::/23"))
+	c.AddPrefix(netip.MustParsePrefix("3fff:800::/23"))
+	topLevelPrefixes := c.TopLevelPrefixes()
+	assert.EqualValues(t, []netip.Prefix{
+		netip.MustParsePrefix("240.160.0.0/16"),
+		netip.MustParsePrefix("3fff::/16"),
+	}, topLevelPrefixes)
+}
+
 func TestRfc2317CNAMEs(t *testing.T) {
 	const (
 		v4base4  = ".240/4.in-addr.arpa"

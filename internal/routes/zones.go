@@ -113,6 +113,15 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, namese
 			ID: zoneId,
 		})
 	}))
+
+	r.Post("/zones", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+		if !b.Claims.Perms.Has("domain:admin") {
+			http.NotFound(rw, req)
+			return
+		}
+
+		// TODO: support adding domains
+	}))
 }
 
 func getZoneId(req *http.Request) (int64, error) {

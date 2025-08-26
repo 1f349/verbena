@@ -3,10 +3,12 @@ package builder
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"sync"
 	"time"
 
@@ -54,6 +56,9 @@ func (b *Builder) Start() {
 
 func (b *Builder) internalTicker() {
 	var loadedZones []string
+	var v4loadedReverseZones []netip.Prefix
+	var v6loadedReverseZones []netip.Prefix
+	// TODO: figure out how to handle reverse zones here
 
 	t := time.NewTicker(b.genTick)
 	for {
@@ -68,6 +73,9 @@ func (b *Builder) internalTicker() {
 			}
 
 			var newLoadedZones []string
+			var newV4loadedReverseZones []netip.Prefix
+			var newV6loadedReverseZones []netip.Prefix
+
 			for _, i := range zones {
 				err = b.Generate(context.Background(), i)
 				if err != nil {
@@ -86,6 +94,8 @@ func (b *Builder) internalTicker() {
 				} else {
 					loadedZones = newLoadedZones
 				}
+
+				// TODO: add function to generate stubs for used prefixes
 			}
 		}
 	}
@@ -127,17 +137,7 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		})
 	}
 
-	zoneFileName := filepath.Join(b.dir, zoneInfo.Name+".zone")
-	zoneFileTemp := filepath.Join(b.dir, zoneInfo.Name+".zone.temp")
-
-	zoneFile, err := os.Create(zoneFileTemp)
-	if err != nil {
-		return err
-	}
-	defer zoneFile.Close()
-	defer os.Remove(zoneFileTemp)
-
-	err = zone.WriteZone(zoneFile, zoneInfo.Name, uint32(zoneInfo.Ttl), zone.SoaRecord{
+	return b.generateZoneFile(ctx, zoneInfo.Name, zone.SoaRecord{
 		Nameserver: b.nameservers[0],
 		Admin:      zoneInfo.Admin,
 		Serial:     uint32(zoneInfo.Serial),
@@ -146,6 +146,54 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		Expire:     uint32(zoneInfo.Expire),
 		TimeToLive: uint32(zoneInfo.Ttl),
 	}, zoneRecords)
+}
+
+func (b *Builder) generatePrefixStubs(ctx context.Context, zoneInfo database.Zone, prefix netip.Prefix) error {
+	zoneRecords := zone.Rfc2317CNAMEs(prefix, nulls.NewUInt32(uint32(zoneInfo.Ttl)))
+
+	// Prefix stubs are not required
+	if zoneRecords == nil {
+		return nil
+	}
+
+	nsRecords := make([]zone.Record, 0, len(b.nameservers))
+	for i, ns := range b.nameservers {
+		nsRecords[i] = zone.Record{
+			Name:       "",
+			TimeToLive: nulls.UInt32{},
+			Type:       zone.NS,
+			Value:      ns,
+		}
+	}
+
+	zoneRecords = append(nsRecords, zoneRecords...)
+
+	b.genLock.Lock()
+	defer b.genLock.Unlock()
+
+	return b.generateZoneFile(ctx, prefix.Addr().String()+"_"+strconv.Itoa(prefix.Bits()), zone.SoaRecord{
+		Nameserver: b.nameservers[0],
+		Admin:      zoneInfo.Admin,
+		Serial:     uint32(zoneInfo.Serial),
+		Refresh:    uint32(zoneInfo.Refresh),
+		Retry:      uint32(zoneInfo.Retry),
+		Expire:     uint32(zoneInfo.Expire),
+		TimeToLive: uint32(zoneInfo.Ttl),
+	}, zoneRecords)
+}
+
+func (b *Builder) generateZoneFile(ctx context.Context, zoneName string, soaRecord zone.SoaRecord, zoneRecords []zone.Record) error {
+	zoneFileName := filepath.Join(b.dir, zoneName+".zone")
+	zoneFileTemp := filepath.Join(b.dir, zoneName+".zone.temp")
+
+	zoneFile, err := os.Create(zoneFileTemp)
+	if err != nil {
+		return err
+	}
+	defer zoneFile.Close()
+	defer os.Remove(zoneFileTemp)
+
+	err = zone.WriteZone(zoneFile, zoneName, soaRecord.TimeToLive, soaRecord, zoneRecords)
 	if err != nil {
 		return err
 	}
@@ -155,7 +203,7 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		return err
 	}
 
-	cmd := exec.CommandContext(ctx, b.cmd.CheckZone, zoneInfo.Name, zoneFileTemp)
+	cmd := exec.CommandContext(ctx, b.cmd.CheckZone, zoneName, zoneFileTemp)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if logger.Logger.GetLevel() >= log.DebugLevel {
@@ -169,7 +217,7 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		return err
 	}
 
-	return b.bindReloadZone(ctx, zoneInfo)
+	return b.bindReloadZone(ctx, zoneName)
 }
 
 func (b *Builder) generateLocalGeneratedConfig(ctx context.Context, zones []string) error {
@@ -198,6 +246,6 @@ func (b *Builder) bindReload(ctx context.Context) error {
 	return exec.CommandContext(ctx, b.cmd.Rndc, "reload").Run()
 }
 
-func (b *Builder) bindReloadZone(ctx context.Context, zone database.Zone) error {
-	return exec.CommandContext(ctx, b.cmd.Rndc, "reload", zone.Name).Run()
+func (b *Builder) bindReloadZone(ctx context.Context, zoneName string) error {
+	return exec.CommandContext(ctx, b.cmd.Rndc, "reload", zoneName).Run()
 }
