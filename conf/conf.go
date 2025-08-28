@@ -1,12 +1,12 @@
 package conf
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 
 	"github.com/1f349/verbena/internal/database"
 	"github.com/1f349/verbena/internal/utils"
+	"gopkg.in/yaml.v3"
 )
 
 type Conf struct {
@@ -71,10 +71,10 @@ func MustNameserverConf(slice [][]string) NameserverConf {
 	return n
 }
 
-var _ json.Marshaler = (*NameserverConf)(nil)
-var _ json.Unmarshaler = (*NameserverConf)(nil)
+var _ yaml.Marshaler = (*NameserverConf)(nil)
+var _ yaml.Unmarshaler = (*NameserverConf)(nil)
 
-func (n NameserverConf) MarshalJSON() ([]byte, error) {
+func (n NameserverConf) MarshalYAML() (any, error) {
 	var slice [][]string
 	slice = append(slice, n.defaultNameservers)
 	for _, i := range n.nameserverMap {
@@ -83,12 +83,12 @@ func (n NameserverConf) MarshalJSON() ([]byte, error) {
 		}
 		slice = append(slice, i)
 	}
-	return json.Marshal(slice)
+	return yaml.Marshal(slice)
 }
 
-func (n *NameserverConf) UnmarshalJSON(bytes []byte) error {
+func (n *NameserverConf) UnmarshalYAML(bytes *yaml.Node) error {
 	var slice [][]string
-	err := json.Unmarshal(bytes, &slice)
+	err := bytes.Decode(&slice)
 	if err != nil {
 		return err
 	}
