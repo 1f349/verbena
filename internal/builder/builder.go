@@ -66,7 +66,9 @@ func (b *Builder) internalTicker() {
 
 			var newLoadedZones []string
 			for _, i := range zones {
-				err = b.Generate(context.Background(), i)
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				err = b.Generate(ctx, i)
+				cancel()
 				if err != nil {
 					logger.Logger.Error("Failed to generate a zone", "zone id", i.ID, "zone name", i.Name, "err", err)
 				}
@@ -77,9 +79,11 @@ func (b *Builder) internalTicker() {
 
 			// If the currently loaded zones and new loaded zones
 			if !slices.Equal(newLoadedZones, loadedZones) {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 				err = b.generateLocalGeneratedConfig(ctx, newLoadedZones)
+				cancel()
 				if err != nil {
-					logger.Logger.Error("Failed to generate locally generated config")
+					logger.Logger.Error("Failed to generate locally generated config", "err", err)
 				} else {
 					loadedZones = newLoadedZones
 				}
