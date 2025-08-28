@@ -193,9 +193,23 @@ func (b *Builder) generateLocalGeneratedConfig(ctx context.Context, zones []stri
 }
 
 func (b *Builder) bindReload(ctx context.Context) error {
-	return exec.CommandContext(ctx, b.cmd.Rndc, "reload").Run()
+	cmd := exec.CommandContext(ctx, b.cmd.Rndc, "reload")
+	return runCmdDebugLog("Full rndc log", cmd)
 }
 
 func (b *Builder) bindReloadZone(ctx context.Context, zone database.Zone) error {
-	return exec.CommandContext(ctx, b.cmd.Rndc, "reload", zone.Name).Run()
+	cmd := exec.CommandContext(ctx, b.cmd.Rndc, "reload", zone.Name)
+	return runCmdDebugLog("Full rndc log", cmd)
+}
+
+func runCmdDebugLog(title string, cmd *exec.Cmd) error {
+	if logger.Logger.GetLevel() > log.DebugLevel {
+		return cmd.Run()
+	}
+
+	raw, err := cmd.CombinedOutput()
+	if err != nil {
+		logger.Logger.Debug(title, "cmd", cmd.Args, "err", err, "raw", string(raw))
+	}
+	return err
 }
