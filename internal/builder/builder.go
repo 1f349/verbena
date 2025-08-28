@@ -29,7 +29,7 @@ type Builder struct {
 	genTick     time.Duration
 	dir         string
 	bindGenConf string
-	nameservers []string
+	nameservers conf.NameserverConf
 	genLock     sync.Mutex
 	cmd         conf.CmdConf
 }
@@ -40,6 +40,7 @@ func New(db committerQueries, genTick time.Duration, dir string, bindGenConf str
 		genTick:     genTick,
 		dir:         dir,
 		bindGenConf: bindGenConf,
+		nameservers: nameservers,
 		cmd:         cmd,
 	}, nil
 }
@@ -96,9 +97,10 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		return err
 	}
 
-	zoneRecords := make([]zone.Record, 0, len(records)+len(b.nameservers))
+	nameservers := b.nameservers.GetNameserversForZone(zoneInfo)
+	zoneRecords := make([]zone.Record, 0, len(records)+len(nameservers))
 
-	for _, i := range b.nameservers {
+	for _, i := range nameservers {
 		zoneRecords = append(zoneRecords, zone.Record{
 			Name:       "",
 			TimeToLive: nulls.UInt32{},
@@ -134,7 +136,7 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 	defer os.Remove(zoneFileTemp)
 
 	err = zone.WriteZone(zoneFile, zoneInfo.Name, uint32(zoneInfo.Ttl), zone.SoaRecord{
-		Nameserver: b.nameservers[0],
+		Nameserver: zoneInfo.Nameserver,
 		Admin:      zoneInfo.Admin,
 		Serial:     uint32(zoneInfo.Serial),
 		Refresh:    uint32(zoneInfo.Refresh),
