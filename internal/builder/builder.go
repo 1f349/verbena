@@ -52,42 +52,50 @@ func (b *Builder) Start() {
 func (b *Builder) internalTicker() {
 	var loadedZones []string
 
+	logger.Logger.Info("Running initial zone builder")
+	b.generateZones(&loadedZones)
+	logger.Logger.Info("Initial zone builder finished, starting building loop")
+
 	t := time.NewTicker(b.genTick)
 	for {
 		select {
 		case <-t.C:
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			zones, err := b.db.GetActiveZones(ctx)
-			cancel()
-			if err != nil {
-				logger.Logger.Error("Failed to get list of active zones")
-				return
-			}
+			b.generateZones(&loadedZones)
+		}
+	}
+}
 
-			var newLoadedZones []string
-			for _, i := range zones {
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-				err = b.Generate(ctx, i)
-				cancel()
-				if err != nil {
-					logger.Logger.Error("Failed to generate a zone", "zone id", i.ID, "zone name", i.Name, "err", err)
-				}
-				newLoadedZones = append(newLoadedZones, i.Name)
-			}
+func (b *Builder) generateZones(loadedZones *[]string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	zones, err := b.db.GetActiveZones(ctx)
+	cancel()
+	if err != nil {
+		logger.Logger.Error("Failed to get list of active zones")
+		return
+	}
 
-			slices.Sort(newLoadedZones)
+	var newLoadedZones []string
+	for _, i := range zones {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		err = b.Generate(ctx, i)
+		cancel()
+		if err != nil {
+			logger.Logger.Error("Failed to generate a zone", "zone id", i.ID, "zone name", i.Name, "err", err)
+		}
+		newLoadedZones = append(newLoadedZones, i.Name)
+	}
 
-			// If the currently loaded zones and new loaded zones
-			if !slices.Equal(newLoadedZones, loadedZones) {
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-				err = b.generateLocalGeneratedConfig(ctx, newLoadedZones)
-				cancel()
-				if err != nil {
-					logger.Logger.Error("Failed to generate locally generated config", "err", err)
-				} else {
-					loadedZones = newLoadedZones
-				}
-			}
+	slices.Sort(newLoadedZones)
+
+	// If the currently loaded zones and new loaded zones
+	if !slices.Equal(newLoadedZones, *loadedZones) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		err = b.generateLocalGeneratedConfig(ctx, newLoadedZones)
+		cancel()
+		if err != nil {
+			logger.Logger.Error("Failed to generate locally generated config", "err", err)
+		} else {
+			*loadedZones = newLoadedZones
 		}
 	}
 }
