@@ -19,7 +19,7 @@ type zoneFileQueries interface {
 type previewFunc func(ctx context.Context, w io.Writer, zoneInfo database.Zone) error
 
 func AddZoneFileRoutes(r chi.Router, db zoneFileQueries, keystore *mjwt.KeyStore, preview previewFunc) {
-	r.Get("/zones/{zone_id:[0-9]+}/zone-file", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
+	r.Post("/zones/{zone_id:[0-9]+}/zone-file", validateAuthToken(keystore, func(rw http.ResponseWriter, req *http.Request, b mjwt.BaseTypeClaims[auth.AccessTokenClaims]) {
 		zoneId, err := getZoneId(req)
 		if err != nil {
 			http.Error(rw, "Invalid zone ID", http.StatusBadRequest)
