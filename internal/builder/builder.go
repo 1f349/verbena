@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -104,6 +105,44 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 	b.genLock.Lock()
 	defer b.genLock.Unlock()
 
+	zoneFileName := filepath.Join(b.dir, zoneInfo.Name+".zone")
+	zoneFileTemp := filepath.Join(b.dir, zoneInfo.Name+".zone.temp")
+
+	zoneFile, err := os.Create(zoneFileTemp)
+	if err != nil {
+		return err
+	}
+	defer zoneFile.Close()
+	defer os.Remove(zoneFileTemp)
+
+	err = b.Preview(ctx, zoneFile, zoneInfo)
+	if err != nil {
+		return err
+	}
+
+	err = zoneFile.Close()
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, b.cmd.CheckZone, zoneInfo.Name, zoneFileTemp)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if logger.Logger.GetLevel() >= log.DebugLevel {
+			err = fmt.Errorf("named-checkzone failed with output: %w: %s", err, string(out))
+		}
+		return err
+	}
+
+	err = os.Rename(zoneFileTemp, zoneFileName)
+	if err != nil {
+		return err
+	}
+
+	return b.bindReloadZone(ctx, zoneInfo)
+}
+
+func (b *Builder) Preview(ctx context.Context, w io.Writer, zoneInfo database.Zone) error {
 	records, err := b.db.GetZoneActiveRecords(ctx, zoneInfo.ID)
 	if err != nil {
 		return err
@@ -137,17 +176,7 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		})
 	}
 
-	zoneFileName := filepath.Join(b.dir, zoneInfo.Name+".zone")
-	zoneFileTemp := filepath.Join(b.dir, zoneInfo.Name+".zone.temp")
-
-	zoneFile, err := os.Create(zoneFileTemp)
-	if err != nil {
-		return err
-	}
-	defer zoneFile.Close()
-	defer os.Remove(zoneFileTemp)
-
-	err = zone.WriteZone(zoneFile, zoneInfo.Name, uint32(zoneInfo.Ttl), zone.SoaRecord{
+	return zone.WriteZone(w, zoneInfo.Name, uint32(zoneInfo.Ttl), zone.SoaRecord{
 		Nameserver: zoneInfo.Nameserver,
 		Admin:      zoneInfo.Admin,
 		Serial:     uint32(zoneInfo.Serial),
@@ -156,30 +185,6 @@ func (b *Builder) Generate(ctx context.Context, zoneInfo database.Zone) error {
 		Expire:     uint32(zoneInfo.Expire),
 		TimeToLive: uint32(zoneInfo.Ttl),
 	}, zoneRecords)
-	if err != nil {
-		return err
-	}
-
-	err = zoneFile.Close()
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.CommandContext(ctx, b.cmd.CheckZone, zoneInfo.Name, zoneFileTemp)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		if logger.Logger.GetLevel() >= log.DebugLevel {
-			err = fmt.Errorf("named-checkzone failed with output: %w: %s", err, string(out))
-		}
-		return err
-	}
-
-	err = os.Rename(zoneFileTemp, zoneFileName)
-	if err != nil {
-		return err
-	}
-
-	return b.bindReloadZone(ctx, zoneInfo)
 }
 
 func (b *Builder) generateLocalGeneratedConfig(ctx context.Context, zones []string) error {
