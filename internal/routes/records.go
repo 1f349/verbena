@@ -67,6 +67,11 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, na
 				return
 			}
 
+			if !b.Claims.Perms.Has("domain:owns=" + zone.Name) {
+				http.NotFound(rw, req)
+				return
+			}
+
 			rows, err := db.GetZoneRecords(req.Context(), zoneId)
 			if err != nil {
 				logger.Logger.Error("Failed to get zone records", "err", err)
