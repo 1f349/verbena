@@ -162,6 +162,7 @@ func main() {
 	// Add routes
 	routes.AddZoneRoutes(r, db, apiKeystore, config.Nameservers)
 	routes.AddRecordRoutes(r, db, apiKeystore, config.Nameservers)
+	routes.AddZoneFileRoutes(r, db, apiKeystore, zoneBuilder.Preview)
 	routes.AddAuthRoutes(r, db, apiKeystore, apiIssuer)
 
 	serverApi := &http.Server{
