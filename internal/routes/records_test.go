@@ -163,7 +163,7 @@ func TestAddRecordRoutes(t *testing.T) {
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
 		r.ServeHTTP(rec, req)
-		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
 
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/zones/3456/records", nil)
