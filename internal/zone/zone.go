@@ -169,6 +169,12 @@ func WriteZone(w io.Writer, origin string, defaultTtl uint32, soa SoaRecord, rec
 				return errors.New("invalid CAA record")
 			}
 			val = fmt.Sprintf("%d\t%s\t%s", flags, caaFields[1], dns.Fqdn(caaFields[2]))
+		case PTR:
+			_, ok := dns.IsDomainName(record.Value)
+			if !ok {
+				return fmt.Errorf("invalid PTR record: %s", record.Value)
+			}
+			val = dns.Fqdn(record.Value)
 		default:
 			continue
 		}
