@@ -216,7 +216,12 @@ func (b *Builder) bindReload(ctx context.Context) error {
 
 func (b *Builder) bindReloadZone(ctx context.Context, zone database.Zone) error {
 	cmd := exec.CommandContext(ctx, b.cmd.Rndc, "reload", zone.Name)
-	return runCmdDebugLog("Full rndc log", cmd)
+	err := runCmdDebugLog("Full rndc log", cmd)
+	if err != nil {
+		// If "rndc reload <zone>" fails then try "rndc reload" without the zone argument
+		return b.bindReload(ctx)
+	}
+	return nil
 }
 
 func runCmdDebugLog(title string, cmd *exec.Cmd) error {
