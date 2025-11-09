@@ -71,7 +71,7 @@ func (b *Builder) generateZones(loadedZones *[]string) {
 	zones, err := b.db.GetActiveZones(ctx)
 	cancel()
 	if err != nil {
-		logger.Logger.Error("Failed to get list of active zones")
+		logger.Logger.Error("Failed to get list of active zones", "err", err)
 		return
 	}
 
