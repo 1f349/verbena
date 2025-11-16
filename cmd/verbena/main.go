@@ -35,10 +35,8 @@ var (
 )
 
 func _() {
-	// TODO: output zones files to update bind dns
-	// sync between verbena services using grpc or similar
-	// check status of other nodes and remove from dns when down
-	// provide a maintenance mode to remove nodes early and retain uptime
+	// TODO: Check status of other nodes and remove from dns when down
+	// TODO: Provide a maintenance mode to remove nodes early and retain uptime
 }
 
 func main() {
