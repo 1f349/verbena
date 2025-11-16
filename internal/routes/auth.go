@@ -93,6 +93,7 @@ func AddAuthRoutes(r *chi.Mux, db authQueries, userKeystore *mjwt.KeyStore, apiI
 			http.Error(rw, "Invalid token", http.StatusBadRequest)
 			return
 		}
+		logger.Logger.Debug("Refreshing bot token", "id", accessTokenId, "hex", b.Claims.AccessTokenId, "zone", zone)
 
 		_, err = db.BotTokenExists(req.Context(), accessTokenId)
 		switch {
