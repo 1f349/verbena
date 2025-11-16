@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/binary"
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -26,6 +23,7 @@ import (
 
 var configPath = flag.String("conf", "", "Config file path")
 var zone = flag.String("zone", "", "Zone to generate a token for")
+var owner = flag.Int64("owner", 0, "Owner to generate a token for")
 
 func main() {
 	flag.Parse()
@@ -39,6 +37,9 @@ func main() {
 	if _, isDomain := dns.IsDomainName(*zone); !isDomain {
 		logger.Logger.Fatalf("Invalid zone %s", *zone)
 		return
+	}
+	if *owner == 0 {
+		logger.Logger.Fatal("Owner flag is missing")
 	}
 
 	openConf, err := os.Open(*configPath)
@@ -85,15 +86,18 @@ func main() {
 
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 5*time.Minute)
 
-	_, err = db.LookupZone(ctx, *zone)
+	zoneId, err := db.LookupZone(ctx, *zone)
 	if err != nil {
 		logger.Logger.Fatal("Failed to lookup zone", "err", err)
 		return
 	}
 
-	tokenId := randomTokenId()
-	if tokenId == 0 {
-		logger.Logger.Fatal("Failed to generate random token id")
+	tokenId, err := db.RegisterBotToken(ctx, database.RegisterBotTokenParams{
+		OwnerID: *owner,
+		ZoneID:  zoneId,
+	})
+	if err != nil {
+		logger.Logger.Fatal("Failed to register bot token", "err", err)
 		return
 	}
 
@@ -115,14 +119,4 @@ func joinPath(base, option string) string {
 		return filepath.Clean(option)
 	}
 	return filepath.Join(base, option)
-}
-
-func randomTokenId() int64 {
-	const tokenReadLength = 8
-	var b [tokenReadLength]byte
-	least, err := io.ReadAtLeast(rand.Reader, b[:], tokenReadLength)
-	if err != nil || least != tokenReadLength {
-		return 0
-	}
-	return int64(binary.BigEndian.Uint64(b[:]))
 }
