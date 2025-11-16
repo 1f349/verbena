@@ -73,7 +73,8 @@ func refreshToken(c *Client) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("refresh-bot-token returned unexpected status %v", resp.StatusCode)
+		errBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("refresh-bot-token returned unexpected status %v: %s", resp.StatusCode, errBody)
 	}
 	var token struct {
 		Token string `json:"token"`
