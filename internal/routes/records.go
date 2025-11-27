@@ -84,7 +84,7 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, na
 			records := make([]rest.Record, 0, len(rows)+len(ns))
 			for _, ns := range ns {
 				records = append(records, rest.Record{
-					ID:     0,
+					ID:     -2,
 					Name:   "@",
 					ZoneID: zoneId,
 					Ttl:    nulls.Int32{},
