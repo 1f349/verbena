@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+mkdir -p /etc/verbena/zones/
+
+theLine='include "/etc/verbena/verbena-named.conf.local.generated";'
+namedConf='/etc/bind/named.conf'
+hasLine="$(grep -c "$theLine" "$namedConf")"
+
+# Append verbena config if it is missing
+if [ "$hasLine" -ne 0 ]; then
+  echo "$theLine" >> "$namedConf"
+fi
+
+systemctl daemon-reexec
+#systemctl enable --now verbena

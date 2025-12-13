@@ -1,0 +1,11 @@
+[Unit]
+Description=Verbena DNS Management Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/verbena
+User=verbena
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

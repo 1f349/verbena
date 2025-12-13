@@ -1,0 +1,11 @@
+listen: ':1237'
+db: 'user:password@unix(/run/mysqld/mysqld.sock)/verbena'
+nameservers:
+  - [ns1.example.com, ns2.example.com]
+zonePath: /etc/verbena/zones/
+bindGenConf: /etc/verbena/verbena-named.conf.local.generated
+generatorTick: 5m
+primary: false
+committerTick: 15m
+tokenIssuer: 'uuid'
+rootHints: /usr/share/dns/root.hints
