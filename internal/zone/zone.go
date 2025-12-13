@@ -20,16 +20,6 @@ func zoneRecordName(name string) string {
 	return name
 }
 
-type SoaRecord struct {
-	Nameserver string
-	Admin      string
-	Serial     uint32
-	Refresh    uint32
-	Retry      uint32
-	Expire     uint32
-	TimeToLive uint32
-}
-
 func WriteZone(w io.Writer, origin string, defaultTtl uint32, soa SoaRecord, records []Record) error {
 	_, ok := dns.IsDomainName(origin)
 	if !ok {
