@@ -3,16 +3,14 @@ Section: net
 Priority: optional
 Maintainer: 1f349 Packaging <packaging@1f349.com>
 Standards-Version: 4.6.2
-Build-Depends: golang,
-               debhelper
+Build-Depends: debhelper
 Vcs-Git: https://gitcove.com/1f349/verbena.git -b main
 Vcs-Browser: https://gitcove.com/1f349/verbena.git
 Homepage: https://1f349.com/projects/verbena
 
 Package: verbena
 Architecture: amd64
-Depends: ${shlibs:Depends},
-         dns-root-data,
+Depends: dns-root-data,
          systemd,
          ca-certificates,
          bind9
