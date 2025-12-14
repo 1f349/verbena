@@ -12,4 +12,5 @@ build:
 deb: build
 	mkdir -p packaging/debian/usr/bin/
 	cp dist/verbena packaging/debian/usr/bin/verbena
-	cd packaging/debian/ && dpkg-buildpackage -us -uc -b
+	mkdir -p debian/
+	cd debian/ && dpkg-buildpackage -us -uc -b
