@@ -5,7 +5,7 @@ all: sqlc
 sqlc:
 	sqlc generate
 
-build:
+build: sqlc
 	mkdir -p dist/
 	go build -trimpath -ldflags "-s -w" -o ./dist/verbena ./cmd/verbena
 
