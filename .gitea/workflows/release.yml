@@ -12,7 +12,7 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - uses: actions/checkout@v6
       - run: sudo apt-get update
-      - run: sudo apt-get install bind9-utils -y
+      - run: sudo apt-get install bind9-utils debhelper -y
       - run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
       - run: make deb
       - name: Create Release and Attach Packages
