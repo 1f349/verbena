@@ -1,2 +1,7 @@
 /debian/.debhelper
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.debhelper
+/debian/*.substvars
+/debian/verbena/
 /usr/bin/
