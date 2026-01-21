@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gobuffalo/nulls"
 )
+
+const ttlMaxOneWeek = 60 * 60 * 24 * 7
 
 type recordQueries interface {
 	GetZoneRecords(ctx context.Context, zoneId int64) ([]database.GetZoneRecordsRow, error)
@@ -158,8 +161,8 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, na
 				return
 			}
 
-			if record.Ttl.Valid && record.Ttl.Int32 <= 200 {
-				http.Error(rw, "Invalid time to live, expected 'ttl <= 200'", http.StatusBadRequest)
+			if record.Ttl.Valid && record.Ttl.Int32 <= ttlMaxOneWeek {
+				http.Error(rw, fmt.Sprintf("Invalid time to live, expected 'ttl <= %d seconds'", ttlMaxOneWeek), http.StatusBadRequest)
 				return
 			}
 
@@ -224,8 +227,8 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, na
 				return
 			}
 
-			if record.Ttl.Valid && record.Ttl.Int32 <= 200 {
-				http.Error(rw, "Invalid time to live, expected 'ttl <= 200'", http.StatusBadRequest)
+			if record.Ttl.Valid && record.Ttl.Int32 <= ttlMaxOneWeek {
+				http.Error(rw, fmt.Sprintf("Invalid time to live, expected 'ttl <= %d seconds'", ttlMaxOneWeek), http.StatusBadRequest)
 				return
 			}
 
