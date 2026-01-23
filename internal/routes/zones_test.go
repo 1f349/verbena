@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -149,6 +151,92 @@ func TestAddZoneRoutes(t *testing.T) {
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, "{\"id\":3456,\"name\":\"example.com\",\"serial\":2025062801,\"admin\":\"admin.example.com\",\"refresh\":10,\"retry\":11,\"expire\":12,\"ttl\":13,\"active\":true,\"nameservers\":[\"ns1.example.com\",\"ns2.example.com\"]}\n", rec.Body.String())
+	})
+
+	t.Run("PUT /zones/{id}", func(t *testing.T) {
+		zoneUpdatesValid := zoneUpdates{
+			Refresh: 100,
+			Retry:   200,
+			Expire:  300,
+			Ttl:     400,
+		}
+		zoneUpdatesInvalid := []zoneUpdates{
+			{
+				Refresh: refreshMaxOneWeek + 1,
+				Retry:   1,
+				Expire:  1,
+				Ttl:     1,
+			},
+			{
+				Refresh: 1,
+				Retry:   retryMaxOneWeek + 1,
+				Expire:  1,
+				Ttl:     1,
+			},
+			{
+				Refresh: 1,
+				Retry:   1,
+				Expire:  expireMax90Days + 1,
+				Ttl:     1,
+			},
+			{
+				Refresh: 1,
+				Retry:   1,
+				Expire:  1,
+				Ttl:     ttlMaxOneWeek + 1,
+			},
+		}
+
+		zoneUpdatesValidJson, err := json.Marshal(zoneUpdatesValid)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, _ = json.Marshal(zoneUpdatesInvalid)
+
+		for invalid := range zoneUpdatesInvalid {
+			invalidJson, err := json.Marshal(invalid)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPut, "/zones/3456", bytes.NewReader(invalidJson))
+			ps := auth.NewPermStorage()
+			ps.Set("domain:owns=example.org")
+			token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Authorization", "Bearer "+token)
+			r.ServeHTTP(rec, req)
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+		}
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPut, "/zones/3456", bytes.NewReader(zoneUpdatesValidJson))
+		ps := auth.NewPermStorage()
+		ps.Set("domain:owns=example.org")
+		token, err := issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodPut, "/zones/3456", bytes.NewReader(zoneUpdatesValidJson))
+		ps = auth.NewPermStorage()
+		ps.Set("domain:owns=example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "OK\n", rec.Body.String())
 	})
 
 	t.Run("/zones/lookup/{name}", func(t *testing.T) {
