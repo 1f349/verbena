@@ -133,6 +133,34 @@ func (q *Queries) LookupZone(ctx context.Context, name string) (int64, error) {
 	return id, err
 }
 
+const updateZoneConfig = `-- name: UpdateZoneConfig :exec
+UPDATE zones
+SET refresh = ?,
+    retry   = ?,
+    expire  = ?,
+    ttl     = ?
+WHERE id = ?
+`
+
+type UpdateZoneConfigParams struct {
+	Refresh int32 `json:"refresh"`
+	Retry   int32 `json:"retry"`
+	Expire  int32 `json:"expire"`
+	Ttl     int32 `json:"ttl"`
+	ID      int64 `json:"id"`
+}
+
+func (q *Queries) UpdateZoneConfig(ctx context.Context, arg UpdateZoneConfigParams) error {
+	_, err := q.db.ExecContext(ctx, updateZoneConfig,
+		arg.Refresh,
+		arg.Retry,
+		arg.Expire,
+		arg.Ttl,
+		arg.ID,
+	)
+	return err
+}
+
 const updateZoneSerial = `-- name: UpdateZoneSerial :exec
 UPDATE zones
 SET serial =
