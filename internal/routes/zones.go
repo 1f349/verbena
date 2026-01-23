@@ -106,10 +106,10 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, namese
 		}
 
 		type zoneUpdates struct {
-			Refresh int32
-			Retry   int32
-			Expire  int32
-			Ttl     int32
+			Refresh int32 `json:"refresh"`
+			Retry   int32 `json:"retry"`
+			Expire  int32 `json:"expire"`
+			Ttl     int32 `json:"ttl"`
 		}
 
 		var updates zoneUpdates
