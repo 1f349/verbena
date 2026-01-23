@@ -27,6 +27,13 @@ const retryMaxOneWeek = oneWeekSeconds
 const expireMax90Days = oneDaySeconds * 90
 const ttlMaxOneWeek = oneWeekSeconds
 
+type zoneUpdates struct {
+	Refresh int32 `json:"refresh"`
+	Retry   int32 `json:"retry"`
+	Expire  int32 `json:"expire"`
+	Ttl     int32 `json:"ttl"`
+}
+
 type zoneQueries interface {
 	GetOwnedZones(ctx context.Context, userID string) ([]database.GetOwnedZonesRow, error)
 	GetZone(ctx context.Context, id int64) (database.Zone, error)
@@ -103,13 +110,6 @@ func AddZoneRoutes(r chi.Router, db zoneQueries, keystore *mjwt.KeyStore, namese
 		if err != nil {
 			http.Error(rw, "Invalid zone ID", http.StatusBadRequest)
 			return
-		}
-
-		type zoneUpdates struct {
-			Refresh int32 `json:"refresh"`
-			Retry   int32 `json:"retry"`
-			Expire  int32 `json:"expire"`
-			Ttl     int32 `json:"ttl"`
 		}
 
 		var updates zoneUpdates
