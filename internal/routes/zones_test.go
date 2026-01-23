@@ -20,6 +20,15 @@ import (
 type zoneTestQueries struct {
 }
 
+func (z *zoneTestQueries) UpdateZoneConfig(ctx context.Context, updateZoneConfigParams database.UpdateZoneConfigParams) error {
+	if updateZoneConfigParams.ID != 3456 {
+		return sql.ErrNoRows
+	}
+
+	// Fake update zone config
+	return nil
+}
+
 func (z *zoneTestQueries) GetOwnedZones(ctx context.Context, userID string) ([]database.GetOwnedZonesRow, error) {
 	if userID != "1234" {
 		return []database.GetOwnedZonesRow{}, nil
