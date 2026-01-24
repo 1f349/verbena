@@ -25,3 +25,11 @@ WHERE id = ?;
 SELECT id
 FROM zones
 WHERE name = ?;
+
+-- name: UpdateZoneConfig :exec
+UPDATE zones
+SET refresh = ?,
+    retry   = ?,
+    expire  = ?,
+    ttl     = ?
+WHERE id = ?;

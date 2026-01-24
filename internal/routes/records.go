@@ -17,8 +17,6 @@ import (
 	"github.com/gobuffalo/nulls"
 )
 
-const ttlMaxOneWeek = 60 * 60 * 24 * 7
-
 type recordQueries interface {
 	GetZoneRecords(ctx context.Context, zoneId int64) ([]database.GetZoneRecordsRow, error)
 	GetZoneRecord(ctx context.Context, row database.GetZoneRecordParams) (database.GetZoneRecordRow, error)
