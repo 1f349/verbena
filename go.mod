@@ -1,6 +1,6 @@
 module github.com/1f349/verbena
 
-go 1.24.0
+go 1.26
 
 require (
 	github.com/1f349/mjwt v0.4.1
