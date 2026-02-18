@@ -159,8 +159,8 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, na
 				return
 			}
 
-			if !record.Ttl.Valid || record.Ttl.Int32 > ttlMaxOneWeek {
-				http.Error(rw, fmt.Sprintf("Invalid time to live, expected 'ttl <= %d seconds'", ttlMaxOneWeek), http.StatusBadRequest)
+			if record.Ttl.Valid && record.Ttl.Int32 > ttlMaxOneWeek {
+				http.Error(rw, fmt.Sprintf("Invalid time to live, expected 'null or ttl <= %d seconds'", ttlMaxOneWeek), http.StatusBadRequest)
 				return
 			}
 
@@ -225,8 +225,8 @@ func AddRecordRoutes(r chi.Router, db recordQueries, keystore *mjwt.KeyStore, na
 				return
 			}
 
-			if !record.Ttl.Valid || record.Ttl.Int32 > ttlMaxOneWeek {
-				http.Error(rw, fmt.Sprintf("Invalid time to live, expected 'ttl <= %d seconds'", ttlMaxOneWeek), http.StatusBadRequest)
+			if record.Ttl.Valid && record.Ttl.Int32 > ttlMaxOneWeek {
+				http.Error(rw, fmt.Sprintf("Invalid time to live, expected 'null or ttl <= %d seconds'", ttlMaxOneWeek), http.StatusBadRequest)
 				return
 			}
 
