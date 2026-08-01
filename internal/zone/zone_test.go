@@ -67,6 +67,8 @@ func TestWriteZone(t *testing.T) {
 		{"*", nu32, TXT, "v=spf1 include:_spf.example.com -all"},
 		{"_dmarc", nu32, TXT, "v=DMARC1; p=quarantine; sp=quarantine; pct=50; rua=mailto:dmarcreports@example.com; ruf=mailto:dmarcfailurereports@example.com; adkim=r; aspf=r;"},
 		{"mail._domainkey", nu32, TXT, exampleDomainKey},
+		{"@", nu32, HTTPS, "1 . alpn=\"h3,h2\""},
+		{"hints", nu32, HTTPS, "1 . alpn=\"h3,h2\" ipv4hint=192.0.2.1 ipv6hint=2001:db8::1"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -86,9 +88,11 @@ func TestWriteZone(t *testing.T) {
 		line = strings.TrimSpace(line)
 
 		if expectedLine != line {
-			t.Log("expected = ", hex.EncodeToString([]byte(expectedLine)))
-			t.Log("actual = ", hex.EncodeToString([]byte(line)))
-			t.Fatal("expected", expectedLine, "actual", line)
+			t.Log("expected:", hex.EncodeToString([]byte(expectedLine)))
+			t.Log("actual:  ", hex.EncodeToString([]byte(line)))
+			t.Log("expected:", expectedLine)
+			t.Log("actual:  ", line)
+			t.Fatal("invalid line in test zone")
 		}
 		lineIdx++
 	}

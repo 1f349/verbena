@@ -12,16 +12,18 @@ import (
 )
 
 type RecordValue struct {
-	Text       string      `json:"text,omitempty"`
-	Target     string      `json:"target,omitempty"`
-	IP         *netip.Addr `json:"ip,omitempty"`
-	Preference int32       `json:"preference,omitempty"`
-	Priority   int32       `json:"priority,omitempty"`
-	Weight     int32       `json:"weight,omitempty"`
-	Port       uint16      `json:"port,omitempty"`
-	Flags      uint8       `json:"flags,omitempty"`
-	Tag        string      `json:"tag,omitempty"`
-	Value      string      `json:"value,omitempty"`
+	Text       string            `json:"text,omitempty"`
+	Target     string            `json:"target,omitempty"`
+	IP         *netip.Addr       `json:"ip,omitempty"`
+	Preference int32             `json:"preference,omitempty"`
+	Priority   int32             `json:"priority,omitempty"`
+	Weight     int32             `json:"weight,omitempty"`
+	Port       uint16            `json:"port,omitempty"`
+	Flags      uint8             `json:"flags,omitempty"`
+	Tag        string            `json:"tag,omitempty"`
+	Value      string            `json:"value,omitempty"`
+	Alpn       utils.HttpVersion `json:"alpn,omitempty"`
+	Hints      []netip.Addr      `json:"hints,omitempty"`
 }
 
 func (v RecordValue) IsValidForType(recordType string) bool {
@@ -45,6 +47,8 @@ func (v RecordValue) IsValidForType(recordType string) bool {
 		return (v.Tag == "issue" || v.Tag == "issuewild") && !strings.ContainsAny(v.Value, "\t")
 	case zone.PTR:
 		return utils.ValidateDomainName(v.Target)
+	case zone.HTTPS:
+		return v.Priority > 0 && utils.ValidateDomainName(v.Target) && v.Alpn.IsValid()
 	default:
 		return false
 	}
@@ -77,6 +81,8 @@ func (v RecordValue) ToValueString(recordType string) string {
 		return fmt.Sprintf("%d\t%s\t%s", v.Flags, v.Tag, v.Value)
 	case zone.PTR:
 		return v.Target
+	case zone.HTTPS:
+		return fmt.Sprintf("%d\t%s\t%s", v.Priority, v.Target, v.Value)
 	default:
 		return ""
 	}
@@ -177,6 +183,58 @@ func ParseRecordValue(recordType string, value string) (RecordValue, error) {
 			return RecordValue{}, errors.New("invalid PTR record")
 		}
 		return RecordValue{Target: value}, nil
+	case zone.HTTPS:
+		fields := strings.SplitN(value, "\t", 4)
+		// Priority
+		priority, err := strconv.ParseUint(fields[0], 10, 32)
+		if err != nil {
+			return RecordValue{}, fmt.Errorf("invalid HTTPS record: %w", err)
+		}
+		// Target
+		if !utils.ValidateDomainName(fields[1]) {
+			return RecordValue{}, errors.New("invalid HTTPS record")
+		}
+		// Value
+		recordValue := RecordValue{
+			Priority: int32(priority),
+			Target:   fields[1],
+		}
+		pairs := strings.Split(fields[2], ",")
+
+		// Build keys
+		for _, kv := range pairs {
+			key, value, found := strings.Cut(kv, "=")
+			if !found {
+				return RecordValue{}, errors.New("invalid HTTPS record")
+			}
+			switch key {
+			case "alpn":
+				version, err := utils.ParseHttpVersion(value)
+				if err != nil {
+					return RecordValue{}, fmt.Errorf("invalid HTTPS record: %w", err)
+				}
+				recordValue.Alpn = version
+			case "ipv4hint":
+				for item := range strings.SplitSeq(value, ",") {
+					addr, err := netip.ParseAddr(item)
+					if err != nil {
+						return RecordValue{}, fmt.Errorf("invalid HTTPS record: %w", err)
+					}
+					recordValue.Hints = append(recordValue.Hints, addr)
+				}
+			case "ipv6hint":
+				for item := range strings.SplitSeq(value, ",") {
+					addr, err := netip.ParseAddr(item)
+					if err != nil {
+						return RecordValue{}, fmt.Errorf("invalid HTTPS record: %w", err)
+					}
+					recordValue.Hints = append(recordValue.Hints, addr)
+				}
+			default:
+				return RecordValue{}, errors.New("invalid HTTPS record")
+			}
+		}
+		return recordValue, nil
 	default:
 		return RecordValue{}, errors.New("invalid record type")
 	}

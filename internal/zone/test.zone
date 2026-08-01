@@ -50,3 +50,6 @@ mail._domainkey	IN	TXT	(
 	"gggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
 	"iiiiiiiiii"
 )
+
+@	IN	HTTPS	1	.	alpn="h3,h2"
+hints	IN	HTTPS	1	.	alpn="h3,h2" ipv4hint=192.0.2.1 ipv6hint=2001:db8::1

@@ -257,6 +257,35 @@ func TestAddRecordRoutes(t *testing.T) {
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, "{\"id\":2,\"name\":\"test\",\"zone_id\":3456,\"ttl\":null,\"type\":\"AAAA\",\"value\":{\"ip\":\"2001:db8::6\"},\"active\":true}\n", rec.Body.String())
+
+		rec = httptest.NewRecorder()
+		req = httptest.NewRequest(http.MethodPost, "/zones/3456/records", strings.NewReader(`{
+  "name": "test",
+	"ttl": null,
+	"type": "HTTPS",
+	"value": {
+		"target": ".",
+		"priority": 1,
+		"alpn": 6,
+		"hints": [
+			"192.0.2.1",
+			"192.0.2.2",
+			"2001:db8::1",
+			"2001:db8::2"
+		]
+	},
+	"active": true
+}`))
+		ps = auth.NewPermStorage()
+		ps.Set("domain:owns=example.com")
+		token, err = issuer.GenerateJwt("1234", "", jwt.ClaimStrings{}, time.Hour, auth.AccessTokenClaims{Perms: ps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		r.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "{\"id\":3,\"name\":\"test\",\"zone_id\":3456,\"ttl\":null,\"type\":\"HTTPS\",\"value\":{\"target\":\".\",\"priority\":1,\"alpn\":6,\"hints\":[\"192.0.2.1\",\"192.0.2.2\",\"2001:db8::1\",\"2001:db8::2\"]},\"active\":true}\n", rec.Body.String())
 	})
 
 	t.Run("PUT /zones/3456/records/2", func(t *testing.T) {

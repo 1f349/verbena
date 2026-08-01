@@ -165,6 +165,77 @@ func WriteZone(w io.Writer, origin string, defaultTtl uint32, soa SoaRecord, rec
 				return fmt.Errorf("invalid PTR record: %s", record.Value)
 			}
 			val = dns.Fqdn(record.Value)
+		case HTTPS:
+			httpsFields := strings.Fields(record.Value)
+			if len(httpsFields) < 3 {
+				return fmt.Errorf("invalid HTTPS record: %s", record.Value)
+			}
+			// Priority
+			priority, err := strconv.ParseUint(httpsFields[0], 10, 32)
+			if err != nil {
+				return errors.New("invalid HTTPS record")
+			}
+			// Target
+			if !utils.ValidateDomainName(httpsFields[1]) {
+				return errors.New("invalid HTTPS record")
+			}
+			// Value
+			var alpn utils.HttpVersion
+			hintsV4 := make([]netip.Addr, 0)
+			hintsV6 := make([]netip.Addr, 0)
+			pairs, err := utils.ParseDnsKeyValue(strings.Join(httpsFields[2:], " "))
+			if err != nil {
+				return fmt.Errorf("invalid HTTPS record: %w", err)
+			}
+			for key, value := range pairs {
+				switch key {
+				case "alpn":
+					httpVersion, err := utils.ParseHttpVersion(value)
+					if err != nil {
+						return fmt.Errorf("invalid HTTPS record: %w", err)
+					}
+					alpn |= httpVersion
+				case "ipv4hint":
+					hintV4 := strings.Split(value, ",")
+					for _, hint := range hintV4 {
+						addr, err := netip.ParseAddr(hint)
+						if err != nil {
+							return fmt.Errorf("invalid HTTPS record: %w", err)
+						}
+						hintsV4 = append(hintsV4, addr)
+					}
+				case "ipv6hint":
+					hintV6 := strings.Split(value, ",")
+					for _, hint := range hintV6 {
+						addr, err := netip.ParseAddr(hint)
+						if err != nil {
+							return fmt.Errorf("invalid HTTPS record: %w", err)
+						}
+						hintsV6 = append(hintsV6, addr)
+					}
+				default:
+					return fmt.Errorf("invalid HTTPS record: %s", key)
+				}
+			}
+			vals := make([]string, 0)
+			vals = append(vals, fmt.Sprintf("alpn=\"%s\"", alpn.String()))
+			// Add IPv4 hints
+			if len(hintsV4) > 0 {
+				v := make([]string, 0)
+				for _, hint := range hintsV4 {
+					v = append(v, hint.String())
+				}
+				vals = append(vals, "ipv4hint="+strings.Join(v, ","))
+			}
+			// Add IPv6 hints
+			if len(hintsV6) > 0 {
+				v := make([]string, 0)
+				for _, hint := range hintsV6 {
+					v = append(v, hint.String())
+				}
+				vals = append(vals, "ipv6hint="+strings.Join(v, ","))
+			}
+			val = fmt.Sprintf("%d\t%s\t%s", priority, httpsFields[1], strings.Join(vals, " "))
 		default:
 			continue
 		}

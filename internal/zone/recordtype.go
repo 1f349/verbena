@@ -15,10 +15,11 @@ const (
 	SRV
 	CAA
 	PTR
+	HTTPS
 )
 
 func (t RecordType) IsValid() bool {
-	return t > invalidRecordType && t <= PTR
+	return t > invalidRecordType && t <= HTTPS
 }
 
 var recordTypeToString = []string{
@@ -31,6 +32,7 @@ var recordTypeToString = []string{
 	"SRV",
 	"CAA",
 	"PTR",
+	"HTTPS",
 }
 
 func (t RecordType) String() string {
@@ -50,6 +52,7 @@ var stringToRecordType = map[string]RecordType{
 	"SRV":   SRV,
 	"CAA":   CAA,
 	"PTR":   PTR,
+	"HTTPS": HTTPS,
 }
 
 func RecordTypeFromString(s string) RecordType {
